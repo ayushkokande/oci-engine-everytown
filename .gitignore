@@ -1,0 +1,26 @@
+# OS / editor cruft
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Microsoft Office temporary lock files
+~$*
+**/~$*
+
+# Confidential reference material — keep out of the open-source repo until cleared
+Everytown/Everytown_OCI_Package/04_Reference_Materials/
+private/
+
+# Large binary archive (duplicates the unzipped package contents)
+Everytown/Everytown_OCI_Package.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Kiro local session config
+.kiro/specs/**/.config.kiro

@@ -1,0 +1,1646 @@
+{
+  "domains": [
+    {
+      "id": "PL",
+      "name": "Planning",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "PL1",
+          "text": "We primarily focus on short-term planning and activities.",
+          "stage": 1,
+          "trigger_on": "yes",
+          "next_steps": [
+            "Identify 1\u20132 priorities that extend beyond immediate activities (6\u201312 months)",
+            "Set a recurring time (monthly or quarterly) to plan beyond day-to-day work",
+            "Develop a simple 6-month roadmap to begin incorporating longer-term direction"
+          ]
+        },
+        {
+          "id": "PL2",
+          "text": "We have written work plans, a logic model, or a strategy plan to guide our work.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Start with one basic written work plan (goals, activities, timeline, owner)",
+            "Create a simple logic model to connect activities to outcomes",
+            "Build toward a shared set of core planning documents over time"
+          ]
+        },
+        {
+          "id": "PL3",
+          "text": "Staff across the organization can clearly articulate our goals.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Write 3\u20135 clear organizational goals in plain language",
+            "Share goals regularly in meetings and internal materials",
+            "Ask staff to reflect goals back to confirm shared understanding"
+          ]
+        },
+        {
+          "id": "PL4",
+          "text": "We have clarity on where funding will come from to support our programs for at least the next 6\u201312 months.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "List all confirmed and potential funding sources for the next 6\u201312 months",
+            "Identify gaps and prioritize outreach",
+            "Track funding in a simple pipeline (source, amount, timing, likelihood)"
+          ]
+        },
+        {
+          "id": "PL5",
+          "text": "We maintain written work plans that guide activities over the next 6\u201312 months.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Develop a 6\u201312 month work plan for each major program area",
+            "Assign ownership and timelines for key activities",
+            "Use work plans to guide regular team check-ins"
+          ]
+        },
+        {
+          "id": "PL6",
+          "text": "We consistently monitor progress against our written work plans.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish a consistent cadence (monthly or quarterly) to review progress",
+            "Identify key milestones or metrics tied to your plan",
+            "Document updates and adjust activities based on what you learn"
+          ]
+        },
+        {
+          "id": "PL7",
+          "text": "We maintain written documents that describe our mission, context, strategies, budget, and policies.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Compile existing documents into one accessible location",
+            "Identify gaps and prioritize missing materials",
+            "Develop 1\u20132 key documents at a time"
+          ]
+        },
+        {
+          "id": "PL8",
+          "text": "We regularly develop and update our work plans.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Set a regular schedule (quarterly or biannually) to update plans",
+            "Incorporate lessons learned and changing priorities",
+            "Share updates across the team"
+          ]
+        },
+        {
+          "id": "PL9",
+          "text": "We have a clear understanding of where funding will come from for the next year.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Map expected funding across the next 12 months",
+            "Identify confirmed vs. pending sources",
+            "Align program commitments with funding reality"
+          ]
+        },
+        {
+          "id": "PL10",
+          "text": "We are actively developing a strategic plan.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Define 2\u20133 year priorities and outcomes",
+            "Engage staff and stakeholders in shaping direction",
+            "Use a structured planning template or facilitator"
+          ]
+        },
+        {
+          "id": "PL11",
+          "text": "We have a 2\u20133 year strategic plan that includes a multi-year budget, capacity building, and sustainability strategies.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Develop a multi-year plan with clear goals and strategies",
+            "Align budget projections with strategic priorities",
+            "Identify capacity and sustainability needs"
+          ]
+        },
+        {
+          "id": "PL12",
+          "text": "Our strategic plan is updated regularly and connected to operational or work plans.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Link strategic priorities to annual or program work plans",
+            "Revisit and update the plan annually",
+            "Use it to guide decision-making"
+          ]
+        },
+        {
+          "id": "PL13",
+          "text": "We have a clear understanding of where funding will come from for the next 2 or more years.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Project funding across a 2+ year period",
+            "Identify and pursue multi-year funding opportunities",
+            "Align growth decisions with long-term funding expectations"
+          ]
+        },
+        {
+          "id": "PL14",
+          "text": "We are implementing our second or subsequent strategic plan.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Document lessons learned from your current or first plan",
+            "Use those insights to strengthen your next planning cycle",
+            "Establish a repeatable planning \u2192 implementation \u2192 reflection process"
+          ]
+        },
+        {
+          "id": "PL15",
+          "text": "We serve as a model for other organizations in planning and strategy.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify and document one strong planning practice",
+            "Share tools or lessons learned with peers",
+            "Participate in peer learning opportunities"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FR",
+      "name": "Fundraising",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "FR1",
+          "text": "We have a base of financial supporters who contribute to our work.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 3\u20135 initial supporters (individuals, partners, local funders)",
+            "Begin outreach using existing relationships and community connections",
+            "Track supporters and contributions in a simple list or system"
+          ]
+        },
+        {
+          "id": "FR2",
+          "text": "We generate financial resources beyond in-kind support (e.g., volunteer time, donated space).",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to convert in-kind support into financial contributions",
+            "Prioritize 1\u20132 funding opportunities that provide direct financial support",
+            "Build a basic case for support describing your work and impact"
+          ]
+        },
+        {
+          "id": "FR3",
+          "text": "We have clarity on where funding will come from over the next 6\u201312 months.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Map confirmed and potential funding sources for the next 6\u201312 months",
+            "Identify funding gaps and prioritize outreach",
+            "Maintain a funding pipeline tracker (source, amount, timing, likelihood)"
+          ]
+        },
+        {
+          "id": "FR4",
+          "text": "We secure grants that meet or exceed small-dollar thresholds (e.g., $10,000+).",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify funders that offer grants at or above this level",
+            "Strengthen one proposal with clear outcomes and budget",
+            "Build relationships with funders aligned to your work"
+          ]
+        },
+        {
+          "id": "FR5",
+          "text": "We receive funding commitments that extend beyond one-time or single-year support.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Prioritize funders that offer multi-year or renewable support",
+            "Frame funding requests around sustained impact",
+            "Track renewal opportunities and build long-term relationships"
+          ]
+        },
+        {
+          "id": "FR6",
+          "text": "We maintain a balance of restricted and flexible (unrestricted) funding.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to request general operating support",
+            "Clearly communicate organizational needs beyond specific programs",
+            "Track the proportion of restricted vs. unrestricted funding"
+          ]
+        },
+        {
+          "id": "FR7",
+          "text": "We have visibility into funding sources covering at least the next year.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Map expected funding across a 12-month period",
+            "Identify confirmed vs. pending sources",
+            "Align program commitments with funding expectations"
+          ]
+        },
+        {
+          "id": "FR8",
+          "text": "We secure grants at moderate funding levels (e.g., $25,000\u2013$75,000).",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify funders that operate at this funding range",
+            "Strengthen proposals with clearer outcomes and impact data",
+            "Leverage partnerships or introductions to access larger opportunities"
+          ]
+        },
+        {
+          "id": "FR9",
+          "text": "We have a mix of multi-year donors and funding sources that support both programs and operations.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Diversify funding across individuals, foundations, and public sources",
+            "Prioritize both program-specific and general operating funding",
+            "Develop a basic fundraising plan to guide outreach"
+          ]
+        },
+        {
+          "id": "FR10",
+          "text": "We secure grants at higher funding levels (e.g., $75,000+).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify funders aligned with larger-scale investments",
+            "Strengthen organizational narrative, outcomes, and financials",
+            "Build relationships before applying for higher-value opportunities"
+          ]
+        },
+        {
+          "id": "FR11",
+          "text": "We have a diverse base of multi-year funders across sectors.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Map current funders and identify gaps by sector",
+            "Target new funders across foundations, government, and private sector",
+            "Strengthen relationship management with existing supporters"
+          ]
+        },
+        {
+          "id": "FR12",
+          "text": "A meaningful portion of our funding is flexible and can be used strategically.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Request general operating support in proposals",
+            "Communicate organizational priorities beyond individual programs",
+            "Track and increase flexible funding over time"
+          ]
+        },
+        {
+          "id": "FR13",
+          "text": "We have a written fundraising or resource development plan.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create a simple plan outlining targets, sources, and timelines",
+            "Assign responsibility for fundraising activities",
+            "Review and update the plan annually"
+          ]
+        },
+        {
+          "id": "FR14",
+          "text": "We have visibility into funding sources over a 3-year horizon.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Project funding across a 2\u20133 year period",
+            "Identify multi-year opportunities and renewals",
+            "Align growth plans with long-term funding expectations"
+          ]
+        },
+        {
+          "id": "FR15",
+          "text": "We have dedicated capacity (staff or consultant) focused on fundraising.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Assign fundraising responsibility to a specific team member",
+            "Use external support (consultants, partners) as needed",
+            "Build internal fundraising skills through training and tools"
+          ]
+        },
+        {
+          "id": "FR16",
+          "text": "We secure at least some large grants (e.g., $75,000+ or higher).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Target funders known for larger investments",
+            "Strengthen organizational infrastructure and financial reporting",
+            "Build relationships over time before applying"
+          ]
+        },
+        {
+          "id": "FR17",
+          "text": "We have taken steps to build long-term financial sustainability (e.g., reserves, multi-year funding).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to build reserves or flexible funding",
+            "Prioritize multi-year funding relationships",
+            "Develop a sustainability strategy aligned with growth"
+          ]
+        },
+        {
+          "id": "FR18",
+          "text": "Our fundraising plan has been implemented and refined over time.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Implement your existing plan and track progress",
+            "Review results annually and refine strategies",
+            "Document lessons learned to strengthen future efforts"
+          ]
+        },
+        {
+          "id": "FR19",
+          "text": "We have more than one person supporting fundraising efforts.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Engage leadership, board, or staff in fundraising roles",
+            "Define clear responsibilities for fundraising activities",
+            "Build a team-based approach over time"
+          ]
+        },
+        {
+          "id": "FR20",
+          "text": "We have secured at least one very large grant (e.g., $150,000+).",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify funders that provide large-scale investments",
+            "Strengthen proposals with strong outcomes and financials",
+            "Build long-term relationships before pursuing large grants"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GV",
+      "name": "Governance",
+      "weight": 0.9,
+      "questions": [
+        {
+          "id": "GV1",
+          "text": "We have a governing body (e.g., board of directors or advisory board) that provides guidance and oversight.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 3\u20135 trusted individuals to support strategy, fundraising, or community connection",
+            "Use a board matrix (skills, networks, lived experience) to define needed expertise",
+            "Draft a simple purpose and expectations outline and convene an initial meeting"
+          ]
+        },
+        {
+          "id": "GV2",
+          "text": "Our governing body meets regularly and follows a consistent meeting structure.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Set a quarterly meeting cadence for the next 12 months",
+            "Use a standard agenda template (updates, discussion, decisions)",
+            "Assign a chair or lead to manage meetings and follow-ups"
+          ]
+        },
+        {
+          "id": "GV3",
+          "text": "Our governing body actively contributes to strategy, resource development, and organizational oversight.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Define clear roles for members (advising, fundraising, connections)",
+            "Use a board expectations agreement to clarify contributions",
+            "Bring one strategic question or decision to each meeting"
+          ]
+        },
+        {
+          "id": "GV4",
+          "text": "We have governance documents (e.g., bylaws, articles of incorporation) that define roles and responsibilities.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Start with a basic bylaws template and adapt it to your organization",
+            "Define roles, decision-making authority, and meeting structure",
+            "Review and formally adopt documents with your governing body"
+          ]
+        },
+        {
+          "id": "GV5",
+          "text": "Our governing body helps establish organizational strategy, policies, and priorities.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share annual priorities or a strategy summary for input",
+            "Introduce one policy or strategic decision for discussion",
+            "Hold a planning session with board and staff"
+          ]
+        },
+        {
+          "id": "GV6",
+          "text": "Our governing body is actively engaged in advancing the organization\u2019s mission and priorities.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share program updates and impact stories regularly",
+            "Invite members to attend events or observe programming",
+            "Assign each member a role between meetings"
+          ]
+        },
+        {
+          "id": "GV7",
+          "text": "Our governing body includes members with diverse skills, experiences, and community perspectives.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Complete a board matrix to identify gaps (skills, sectors, lived experience)",
+            "Prioritize recruiting members who reflect the community served",
+            "Expand recruitment beyond immediate networks"
+          ]
+        },
+        {
+          "id": "GV8",
+          "text": "We document key decisions from governing body meetings and maintain accessible records.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Assign a note-taker for each meeting",
+            "Use a meeting minutes template focused on decisions and action items",
+            "Store records in a shared, organized location"
+          ]
+        },
+        {
+          "id": "GV9",
+          "text": "Our governing body reviews and approves the organization\u2019s budget and financials annually.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share a clear budget summary with key revenue and expenses",
+            "Establish a finance lead or committee",
+            "Document annual review and approval"
+          ]
+        },
+        {
+          "id": "GV10",
+          "text": "Roles, responsibilities, and terms of service for governing body members are clearly defined.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create a one-page board member role description",
+            "Define time commitments and expectations",
+            "Establish term lengths or renewal cycles"
+          ]
+        },
+        {
+          "id": "GV11",
+          "text": "Our governing body has active committees that support key areas of the organization\u2019s work.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Start with one priority committee (finance, fundraising, governance)",
+            "Use a committee charter with clear purpose and goals",
+            "Assign a board member to lead and report back"
+          ]
+        },
+        {
+          "id": "GV12",
+          "text": "Our governing body provides leadership accountability, including evaluating executive leadership.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish a simple annual evaluation process",
+            "Use a basic evaluation template (goals, strengths, growth areas)",
+            "Clarify the board\u2019s role in supporting and assessing leadership"
+          ]
+        },
+        {
+          "id": "GV13",
+          "text": "Key decisions from governing body meetings are shared with appropriate stakeholders.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share brief summaries of decisions with staff",
+            "Use a standard update format (decisions, next steps)",
+            "Establish a consistent post-meeting communication rhythm"
+          ]
+        },
+        {
+          "id": "GV14",
+          "text": "There are clear boundaries between governance and day-to-day operations.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Use a governance vs. management roles chart",
+            "Identify and address areas of overlap",
+            "Reinforce boundaries in meetings and decision-making"
+          ]
+        },
+        {
+          "id": "GV15",
+          "text": "We have a plan for leadership succession (short-term and/or long-term).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify an interim leader if leadership is unavailable",
+            "Document key responsibilities and processes",
+            "Begin outlining a longer-term succession plan"
+          ]
+        },
+        {
+          "id": "GV16",
+          "text": "Our governing body regularly recruits and integrates new members.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Track member tenure and define term expectations",
+            "Maintain a pipeline of potential members",
+            "Set a goal to recruit at least one new member annually"
+          ]
+        },
+        {
+          "id": "GV17",
+          "text": "Our governing body is prepared to support executive leadership transitions.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Outline a transition plan (roles, steps, timeline)",
+            "Identify who would lead the process",
+            "Use a transition checklist to prepare"
+          ]
+        },
+        {
+          "id": "GV18",
+          "text": "Our governing body contributes to peer learning and shares practices with others in the field.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Participate in a peer learning opportunity or convening",
+            "Share a lesson learned or promising practice",
+            "Identify one opportunity to contribute to the field"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "HR",
+      "name": "Human Resources",
+      "weight": 0.9,
+      "questions": [
+        {
+          "id": "HR1",
+          "text": "Staff in our organization receive consistent compensation (wages or salaries).",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify priority roles to transition from stipends to wages",
+            "Align compensation with available and projected funding",
+            "Develop a phased plan to increase compensation stability"
+          ]
+        },
+        {
+          "id": "HR2",
+          "text": "We have a structured onboarding process that supports new staff.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create a basic onboarding checklist (roles, expectations, policies)",
+            "Pair new staff with a supervisor or peer mentor",
+            "Standardize onboarding across roles over time"
+          ]
+        },
+        {
+          "id": "HR3",
+          "text": "Staff roles and responsibilities are clearly defined.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create or refine job descriptions for each role",
+            "Clarify team structure and reporting lines",
+            "Review and update roles as the organization grows"
+          ]
+        },
+        {
+          "id": "HR4",
+          "text": "We have systems in place to recruit and retain staff from the communities we serve, including credible messengers.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify recruitment channels within the community",
+            "Define support structures for staff with non-traditional work histories",
+            "Build retention strategies (mentorship, training, advancement pathways)"
+          ]
+        },
+        {
+          "id": "HR5",
+          "text": "Staff receive training and professional development opportunities.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 1\u20132 core training priorities (e.g., outreach, case management)",
+            "Provide at least annual training opportunities",
+            "Partner with external providers for additional support"
+          ]
+        },
+        {
+          "id": "HR6",
+          "text": "Staff meet regularly with supervisors for guidance and support.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish a regular 1:1 meeting cadence (weekly or biweekly)",
+            "Provide supervisors with a simple structure for check-ins",
+            "Track follow-ups and support needs"
+          ]
+        },
+        {
+          "id": "HR7",
+          "text": "We support staff in addressing trauma, stress, and burnout related to the work.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create space for conversations about trauma and workload",
+            "Introduce basic wellness practices or supports",
+            "Identify external resources (counseling, peer support, etc.)"
+          ]
+        },
+        {
+          "id": "HR8",
+          "text": "Staff are primarily employed through formal payroll systems rather than stipends.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Transition staff to payroll systems where possible",
+            "Ensure compliance with employment and tax requirements",
+            "Align compensation structure with organizational growth"
+          ]
+        },
+        {
+          "id": "HR9",
+          "text": "We have staff with specialized roles (e.g., program, operations, fundraising).",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify key functional gaps",
+            "Begin assigning focused responsibilities within the team",
+            "Hire or contract for specialized roles as capacity grows"
+          ]
+        },
+        {
+          "id": "HR10",
+          "text": "We have written job descriptions for all staff positions.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Draft job descriptions outlining responsibilities and expectations",
+            "Align descriptions with organizational priorities",
+            "Review and update regularly"
+          ]
+        },
+        {
+          "id": "HR11",
+          "text": "We have systems in place to retain staff over time.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Track retention and identify patterns",
+            "Conduct informal check-ins to understand staff needs",
+            "Develop strategies to improve retention (growth, compensation, support)"
+          ]
+        },
+        {
+          "id": "HR12",
+          "text": "We provide training on trauma, burnout, and staff wellbeing.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Introduce training on trauma-informed practices",
+            "Provide supervisors with tools to support staff wellbeing",
+            "Integrate wellbeing into organizational culture"
+          ]
+        },
+        {
+          "id": "HR13",
+          "text": "We have core HR policies (e.g., leave, conduct, hiring, workplace expectations).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Develop a basic HR policy handbook",
+            "Prioritize key policies (leave, conduct, safety)",
+            "Share policies with staff and review periodically"
+          ]
+        },
+        {
+          "id": "HR14",
+          "text": "Staff compensation is competitive and aligned with roles and responsibilities.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Benchmark compensation against similar roles or organizations",
+            "Identify gaps and prioritize adjustments over time",
+            "Align compensation strategy with fundraising and growth"
+          ]
+        },
+        {
+          "id": "HR15",
+          "text": "Supervisors are trained to effectively manage and support staff.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Provide basic supervision training (feedback, coaching, accountability)",
+            "Offer ongoing development for supervisors",
+            "Create simple tools to support effective supervision"
+          ]
+        },
+        {
+          "id": "HR16",
+          "text": "We have pathways for staff advancement and internal growth.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities for staff to grow into new roles",
+            "Promote from within where possible",
+            "Define clear pathways from frontline to leadership roles"
+          ]
+        },
+        {
+          "id": "HR17",
+          "text": "We have staff who are retained long-term (e.g., multiple years).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify barriers to long-term retention",
+            "Strengthen support systems and compensation where possible",
+            "Recognize and invest in long-tenured staff"
+          ]
+        },
+        {
+          "id": "HR18",
+          "text": "We provide staff with access to benefits (e.g., health, wellness, retirement) as capacity allows.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Explore benefit options appropriate to your size and budget",
+            "Prioritize high-impact benefits (health, wellness support)",
+            "Phase in benefits as funding allows"
+          ]
+        },
+        {
+          "id": "HR19",
+          "text": "We conduct regular performance evaluations for staff.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish a simple annual evaluation process",
+            "Define clear criteria (goals, strengths, growth areas)",
+            "Use evaluations to support staff development"
+          ]
+        },
+        {
+          "id": "HR20",
+          "text": "We review and update job descriptions and roles as the organization evolves.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Schedule periodic reviews of job descriptions",
+            "Align roles with changing priorities",
+            "Ensure clarity as the organization grows"
+          ]
+        },
+        {
+          "id": "HR21",
+          "text": "We use staff feedback and turnover insights to improve recruitment and retention.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Conduct exit conversations or surveys",
+            "Identify trends in turnover",
+            "Adjust recruitment and support strategies accordingly"
+          ]
+        },
+        {
+          "id": "HR22",
+          "text": "Our organization is recognized as a strong and supportive place to work.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify strengths and gaps in staff experience",
+            "Improve communication, support, and recognition practices",
+            "Build a culture that supports retention and growth"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FM",
+      "name": "Financial Management",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "FM1",
+          "text": "We use an accounting system (software or structured tools) to manage our finances.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Transition from manual tracking (e.g., spreadsheets) to basic accounting software",
+            "Set up core categories (revenue, expenses, programs)",
+            "Train at least one staff member on system use"
+          ]
+        },
+        {
+          "id": "FM2",
+          "text": "Financial responsibilities are shared to ensure oversight and accountability.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Separate key functions (e.g., payment approval, recordkeeping)",
+            "Assign a second person to review financial activity",
+            "Establish simple approval processes"
+          ]
+        },
+        {
+          "id": "FM3",
+          "text": "We develop and manage an annual organizational budget.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create a basic annual budget aligned with programs",
+            "Estimate key revenue and expense categories",
+            "Review and adjust the budget periodically"
+          ]
+        },
+        {
+          "id": "FM4",
+          "text": "We are able to meet payroll and financial obligations consistently.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Review cash flow to identify timing gaps",
+            "Align expenses with confirmed funding",
+            "Build a short-term cash management plan"
+          ]
+        },
+        {
+          "id": "FM5",
+          "text": "We have completed at least one independent financial review or audit.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Explore requirements for audits based on funding levels",
+            "Engage an external accountant or firm",
+            "Prepare financial records for review"
+          ]
+        },
+        {
+          "id": "FM6",
+          "text": "We track financial performance and compare actuals to our budget.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Review income and expenses monthly",
+            "Compare actuals against budget projections",
+            "Adjust spending or projections as needed"
+          ]
+        },
+        {
+          "id": "FM7",
+          "text": "We have financial controls in place to manage risk and ensure accountability.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish clear processes for approvals and payments",
+            "Document financial procedures",
+            "Assign oversight responsibility to leadership or board"
+          ]
+        },
+        {
+          "id": "FM8",
+          "text": "We produce financial reports (e.g., income statement, balance sheet) and review them regularly.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Generate basic financial reports monthly or quarterly",
+            "Review reports with leadership or board",
+            "Use reports to inform decision-making"
+          ]
+        },
+        {
+          "id": "FM9",
+          "text": "We have been audited more than once and have improved based on findings.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Address any prior audit findings",
+            "Strengthen financial systems and documentation",
+            "Plan for ongoing audits as funding grows"
+          ]
+        },
+        {
+          "id": "FM10",
+          "text": "We file required taxes and financial documents accurately and on time.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify filing requirements and deadlines",
+            "Assign responsibility for compliance",
+            "Engage external support if needed"
+          ]
+        },
+        {
+          "id": "FM11",
+          "text": "We develop multi-year budgets and financial projections.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Extend your budget planning beyond one year",
+            "Align projections with funding pipeline",
+            "Use projections to guide hiring and growth"
+          ]
+        },
+        {
+          "id": "FM12",
+          "text": "We manage financial reserves, assets, or investments to support sustainability.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to build reserves",
+            "Set aside funds when possible",
+            "Develop a basic reserve policy"
+          ]
+        },
+        {
+          "id": "FM13",
+          "text": "Financial reports are reviewed regularly by leadership and/or the governing body.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share reports with leadership or board quarterly",
+            "Use a standard format for review",
+            "Document key takeaways and decisions"
+          ]
+        },
+        {
+          "id": "FM14",
+          "text": "Our financial performance generally aligns with our budget projections.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Analyze variances between budget and actuals",
+            "Adjust projections based on trends",
+            "Strengthen forecasting practices"
+          ]
+        },
+        {
+          "id": "FM15",
+          "text": "We produce financial reports that track spending across programs or funding streams.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Categorize expenses by program or grant",
+            "Track spending against each funding source",
+            "Use reports to inform program decisions"
+          ]
+        },
+        {
+          "id": "FM16",
+          "text": "We complete independent audits annually as required.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Determine audit requirements based on funding",
+            "Engage an external auditor",
+            "Establish a timeline for annual audits"
+          ]
+        },
+        {
+          "id": "FM17",
+          "text": "Our audits demonstrate consistent financial strength over time.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Address recurring audit issues",
+            "Strengthen internal controls and documentation",
+            "Build consistency in financial practices"
+          ]
+        },
+        {
+          "id": "FM18",
+          "text": "Our financial planning and performance are transparent and understood by stakeholders.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share financial summaries with staff and board",
+            "Communicate key financial priorities",
+            "Build financial literacy across the organization"
+          ]
+        },
+        {
+          "id": "FM19",
+          "text": "We complete audits in a timely manner following the close of the fiscal year.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish a clear audit timeline",
+            "Prepare documents in advance",
+            "Coordinate closely with auditors"
+          ]
+        },
+        {
+          "id": "FM20",
+          "text": "Our organization is recognized for strong financial management practices.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Strengthen consistency in financial systems",
+            "Document and share best practices",
+            "Build credibility with funders and partners"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ML",
+      "name": "Monitoring, Learning & Evaluation",
+      "weight": 0.8,
+      "questions": [
+        {
+          "id": "ML1",
+          "text": "We track basic program activities (e.g., participants served, services delivered).",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 3\u20135 core activities to track consistently",
+            "Use a simple tracking tool (spreadsheet, form, or system)",
+            "Assign responsibility for data entry and oversight"
+          ]
+        },
+        {
+          "id": "ML2",
+          "text": "We collect data on the individuals and communities we serve.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Define key participant information to collect",
+            "Use intake forms or tools to standardize data collection",
+            "Ensure data is stored securely and consistently"
+          ]
+        },
+        {
+          "id": "ML3",
+          "text": "We have defined outcomes or goals for our programs.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 2\u20133 desired outcomes for each program",
+            "Align outcomes with your mission and activities",
+            "Document outcomes in a simple framework"
+          ]
+        },
+        {
+          "id": "ML4",
+          "text": "We track progress toward our program outcomes.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify indicators tied to each outcome",
+            "Track progress at regular intervals",
+            "Use simple tools to monitor outcomes over time"
+          ]
+        },
+        {
+          "id": "ML5",
+          "text": "We use data to inform program decisions and improvements.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Review data regularly (monthly or quarterly)",
+            "Identify trends and areas for improvement",
+            "Adjust programming based on insights"
+          ]
+        },
+        {
+          "id": "ML6",
+          "text": "Staff are trained to collect and use data consistently.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Provide basic training on data collection tools and processes",
+            "Create simple guidelines for data entry and use",
+            "Reinforce expectations through supervision"
+          ]
+        },
+        {
+          "id": "ML7",
+          "text": "We use standardized tools or systems to collect and manage data.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Select a consistent platform (spreadsheet, CRM, database)",
+            "Standardize forms and templates",
+            "Train staff on consistent usage"
+          ]
+        },
+        {
+          "id": "ML8",
+          "text": "We regularly review program data as a team.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Schedule recurring data review sessions",
+            "Share key metrics with staff",
+            "Use discussions to inform program adjustments"
+          ]
+        },
+        {
+          "id": "ML9",
+          "text": "We share program data with external stakeholders (e.g., funders, partners).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Develop simple reports or summaries",
+            "Identify key audiences and reporting needs",
+            "Share data regularly to build transparency and trust"
+          ]
+        },
+        {
+          "id": "ML10",
+          "text": "We use data to support fundraising and external communications.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Incorporate data into proposals and reports",
+            "Highlight outcomes and impact in communications",
+            "Align data with funder priorities"
+          ]
+        },
+        {
+          "id": "ML11",
+          "text": "We have staff or dedicated capacity responsible for data and evaluation.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Assign data responsibilities to a staff member",
+            "Build internal capacity over time",
+            "Use external support where needed"
+          ]
+        },
+        {
+          "id": "ML12",
+          "text": "We assess program effectiveness beyond outputs (e.g., changes in behavior, safety, or outcomes).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Define indicators that reflect deeper impact",
+            "Collect qualitative and/or outcome-based data",
+            "Use findings to refine program design"
+          ]
+        },
+        {
+          "id": "ML13",
+          "text": "We partner with external evaluators, researchers, or learning partners when appropriate.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify potential academic or research partners",
+            "Explore opportunities for evaluation support",
+            "Start with small, focused evaluation efforts"
+          ]
+        },
+        {
+          "id": "ML14",
+          "text": "We use data and learning to adapt programs over time.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Document lessons learned from data reviews",
+            "Make adjustments to program design",
+            "Track changes and their impact"
+          ]
+        },
+        {
+          "id": "ML15",
+          "text": "We have systems in place to ensure data quality and consistency.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create basic data entry standards",
+            "Review data for accuracy regularly",
+            "Provide feedback to staff"
+          ]
+        },
+        {
+          "id": "ML16",
+          "text": "We have a learning agenda or set of questions guiding our evaluation efforts.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 2\u20133 key questions you want to answer",
+            "Align data collection to those questions",
+            "Use findings to guide strategy"
+          ]
+        },
+        {
+          "id": "ML17",
+          "text": "We contribute data, insights, or practices to broader field learning.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Share findings with partners or networks",
+            "Participate in learning communities",
+            "Document and share promising practices"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CE",
+      "name": "Community Engagement & Partnerships",
+      "weight": 0.8,
+      "questions": [
+        {
+          "id": "CE1",
+          "text": "We have strong, trusted relationships with the communities we serve.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify key community stakeholders and build direct relationships",
+            "Increase consistent presence in the community (events, outreach, listening)",
+            "Prioritize trust-building through transparency and follow-through"
+          ]
+        },
+        {
+          "id": "CE2",
+          "text": "We engage community members in shaping our programs and priorities.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Create opportunities for community input (listening sessions, advisory groups)",
+            "Incorporate feedback into program design",
+            "Share how community input informs decisions"
+          ]
+        },
+        {
+          "id": "CE3",
+          "text": "We have partnerships with local organizations that support our work.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 3\u20135 aligned organizations in your ecosystem",
+            "Initiate collaboration conversations",
+            "Define clear opportunities for partnership"
+          ]
+        },
+        {
+          "id": "CE4",
+          "text": "We coordinate with other organizations to align efforts and reduce duplication.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Participate in local coalitions or working groups",
+            "Share program focus areas with partners",
+            "Identify opportunities to align or complement services"
+          ]
+        },
+        {
+          "id": "CE5",
+          "text": "We have relationships with key stakeholders such as city agencies, schools, or hospitals.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify relevant public and institutional partners",
+            "Initiate outreach to build relationships",
+            "Define shared goals or areas of collaboration"
+          ]
+        },
+        {
+          "id": "CE6",
+          "text": "We work collaboratively with partners on shared goals or initiatives.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify 1\u20132 joint initiatives with partners",
+            "Clarify roles and expectations",
+            "Build structures for ongoing collaboration"
+          ]
+        },
+        {
+          "id": "CE7",
+          "text": "We are recognized as a trusted partner within our local ecosystem.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Strengthen visibility through consistent engagement",
+            "Deliver on commitments to partners",
+            "Share impact and results with stakeholders"
+          ]
+        },
+        {
+          "id": "CE8",
+          "text": "We have formal or informal agreements that guide our partnerships.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Document partnership roles and expectations",
+            "Use MOUs or simple agreements where helpful",
+            "Review agreements periodically"
+          ]
+        },
+        {
+          "id": "CE9",
+          "text": "Community members see our organization as credible and relevant.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Increase direct engagement with community members",
+            "Elevate voices of credible messengers",
+            "Align programming with community priorities"
+          ]
+        },
+        {
+          "id": "CE10",
+          "text": "We engage individuals with lived experience in program delivery and leadership.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to involve credible messengers",
+            "Create pathways for leadership roles",
+            "Provide support and training as needed"
+          ]
+        },
+        {
+          "id": "CE11",
+          "text": "We participate in broader community safety or violence prevention efforts.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Join local CVI coalitions or initiatives",
+            "Align your work with broader strategies\nContribute to shared goals and efforts"
+          ]
+        },
+        {
+          "id": "CE12",
+          "text": "We share information and coordinate regularly with partners.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Establish regular communication channels",
+            "Share updates and insights",
+            "Build consistency in coordination"
+          ]
+        },
+        {
+          "id": "CE13",
+          "text": "We contribute to collective strategies or initiatives that extend beyond our organization.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify shared priorities across partners",
+            "Engage in collaborative planning",
+            "Contribute to joint strategies or efforts"
+          ]
+        },
+        {
+          "id": "CE14",
+          "text": "We are seen as a leader or convener within our local ecosystem.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Host or co-host convenings or meetings",
+            "Share knowledge and best practices",
+            "Strengthen relationships across the ecosystem"
+          ]
+        },
+        {
+          "id": "CE15",
+          "text": "We have partnerships that extend beyond the local level (regional or national).",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify regional or national networks to join",
+            "Build connections beyond your immediate geography",
+            "Participate in broader field-building opportunities"
+          ]
+        },
+        {
+          "id": "CE16",
+          "text": "Our organization helps shape broader strategies, policies, or systems related to community safety.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Engage in policy or advocacy conversations",
+            "Share insights with decision-makers",
+            "Contribute to system-level change efforts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TI",
+      "name": "Technology & Infrastructure",
+      "weight": 0.7,
+      "questions": [
+        {
+          "id": "TI1",
+          "text": "We have access to reliable technology (devices, internet, basic tools) to support our work.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify core technology gaps (devices, connectivity, software)",
+            "Prioritize essential tools for daily operations",
+            "Explore low-cost or donated technology options"
+          ]
+        },
+        {
+          "id": "TI2",
+          "text": "Staff use shared tools (e.g., email, file storage, calendars) to coordinate work.",
+          "stage": 1,
+          "trigger_on": "no",
+          "next_steps": [
+            "Select a shared platform (e.g., Google Workspace, Microsoft 365)",
+            "Set up shared folders and communication channels",
+            "Train staff on consistent usage"
+          ]
+        },
+        {
+          "id": "TI3",
+          "text": "We have systems in place to securely store and manage organizational data.",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Move data from personal devices to shared, secure systems",
+            "Establish access controls and permissions",
+            "Back up data regularly"
+          ]
+        },
+        {
+          "id": "TI4",
+          "text": "We use technology to support program operations (e.g., case management, outreach tracking).",
+          "stage": 2,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify key program workflows that can be supported by technology",
+            "Start with simple tools (spreadsheets or basic systems)",
+            "Build toward more structured systems over time"
+          ]
+        },
+        {
+          "id": "TI5",
+          "text": "We use systems to track participant and program data.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Align data tracking tools with program needs",
+            "Standardize how data is entered and stored",
+            "Train staff on consistent data practices"
+          ]
+        },
+        {
+          "id": "TI6",
+          "text": "Staff are trained to use the technology and systems required for their roles.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Provide basic training on key tools and systems",
+            "Develop simple guides or instructions",
+            "Reinforce usage through supervision"
+          ]
+        },
+        {
+          "id": "TI7",
+          "text": "We have processes in place to protect sensitive data and ensure confidentiality.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Define data protection policies (access, storage, sharing)",
+            "Limit access to sensitive information",
+            "Train staff on confidentiality practices"
+          ]
+        },
+        {
+          "id": "TI8",
+          "text": "We use technology to support communication and coordination across teams.",
+          "stage": 3,
+          "trigger_on": "no",
+          "next_steps": [
+            "Implement shared communication tools (email groups, messaging platforms)",
+            "Standardize communication practices",
+            "Ensure all staff are included and connected"
+          ]
+        },
+        {
+          "id": "TI9",
+          "text": "Our technology systems are integrated or aligned across functions (program, finance, fundraising).",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify gaps between systems",
+            "Align tools where possible (shared platforms or integrations)",
+            "Reduce duplication of data entry"
+          ]
+        },
+        {
+          "id": "TI10",
+          "text": "We have dedicated capacity (staff or consultant) to manage technology and systems.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Assign responsibility for technology oversight",
+            "Use external support when needed",
+            "Build internal capacity over time"
+          ]
+        },
+        {
+          "id": "TI11",
+          "text": "We regularly review and update our technology systems to meet organizational needs.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Schedule periodic reviews of tools and systems",
+            "Identify gaps or inefficiencies",
+            "Upgrade or adjust systems as needed"
+          ]
+        },
+        {
+          "id": "TI12",
+          "text": "We use technology to support data analysis, reporting, and decision-making.",
+          "stage": 4,
+          "trigger_on": "no",
+          "next_steps": [
+            "Use basic tools to analyze program and financial data",
+            "Generate simple reports for internal use",
+            "Build toward more advanced analysis over time"
+          ]
+        },
+        {
+          "id": "TI13",
+          "text": "We have systems that support remote or flexible work when needed.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Ensure access to cloud-based tools and systems",
+            "Provide staff with remote access to key platforms",
+            "Establish guidelines for remote coordination"
+          ]
+        },
+        {
+          "id": "TI14",
+          "text": "We have plans in place to maintain operations during disruptions (e.g., outages, emergencies).",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify critical systems and functions",
+            "Develop a basic continuity plan",
+            "Ensure backups and alternative processes exist"
+          ]
+        },
+        {
+          "id": "TI15",
+          "text": "Our organization uses technology in ways that strengthen efficiency, impact, and scale.",
+          "stage": 5,
+          "trigger_on": "no",
+          "next_steps": [
+            "Identify opportunities to streamline workflows",
+            "Use technology to reduce manual processes",
+            "Align technology investments with strategic goals"
+          ]
+        }
+      ]
+    }
+  ],
+  "stage_names": {
+    "1": "Seeding",
+    "2": "Emerging",
+    "3": "Developing",
+    "4": "Strengthening",
+    "5": "Transformational"
+  },
+  "stage_weights": {
+    "1": 5,
+    "2": 4,
+    "3": 3,
+    "4": 2,
+    "5": 1
+  }
+}
