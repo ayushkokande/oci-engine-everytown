@@ -296,3 +296,5 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
   .topbar { padding: 12px 16px; }
   .mode-pill { display: none; }
 }
+.proc-error { display: flex; flex-direction: column; gap: 10px; }
+.proc-error-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }

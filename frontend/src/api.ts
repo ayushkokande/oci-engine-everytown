@@ -31,17 +31,29 @@ export const api = {
   reportUrl: (id: string) => `${BASE}/report/${encodeURIComponent(id)}`,
 
   async submit(profile: Profile, answers: Record<string, Answer>): Promise<SubmissionResult> {
-    const res = await fetch(BASE + "/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile, answers }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(BASE + "/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile, answers }),
+      });
+    } catch {
+      // No HTTP response at all: the API process is stopped, restarting, or unreachable.
+      throw new ApiError(0, "Couldn't reach the assessment server. Check that it's running " +
+        "(make demo or make dev-api), then try again. Your answers are saved.");
+    }
     const body = await res.json().catch(() => null);
     if (res.status === 422 && body && (body as IncompleteError).error === "incomplete_submission") {
       const b = body as IncompleteError;
       throw new ApiError(422, `${b.missing_count} statement(s) still need an answer.`, b);
     }
-    if (!res.ok) throw new ApiError(res.status, `Submission failed (${res.status})`, body);
+    if (!res.ok) {
+      const detail = body && typeof (body as { detail?: unknown }).detail === "string"
+        ? `: ${(body as { detail: string }).detail}` : "";
+      throw new ApiError(res.status, `The server couldn't process this submission (HTTP ${res.status}${detail}). ` +
+        "Your answers are saved; try again, and check the server terminal if it keeps happening.", body);
+    }
     return body as SubmissionResult;
   },
 };

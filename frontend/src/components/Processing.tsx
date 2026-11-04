@@ -22,15 +22,24 @@ export function Processing({ profile, answers, onDone, onError }: {
   const [active, setActive] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<SubmissionResult | null>(null);
-  const started = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+  const started = useRef(-1);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    if (started.current === attempt) return;  // StrictMode runs effects twice in dev
+    started.current = attempt;
     api.submit(profile, answers)
       .then(setResponse)
-      .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again."));
-  }, [profile, answers]);
+      .catch((e: unknown) => setError(e instanceof ApiError ? e.message
+        : `Unexpected error: ${e instanceof Error ? e.message : String(e)}. Your answers are saved.`));
+  }, [profile, answers, attempt]);
+
+  const retry = () => {
+    setError(null);
+    setResponse(null);
+    setActive(0);
+    setAttempt((a) => a + 1);
+  };
 
   // Advance one indicator per MIN_STEP_MS; the last one waits for the real response.
   useEffect(() => {
@@ -68,9 +77,12 @@ export function Processing({ profile, answers, onDone, onError }: {
         })}
       </ol>
       {error && (
-        <div className="alert error" role="alert">
-          {error}{" "}
-          <button className="linklike" onClick={onError}>Back to the questionnaire</button>
+        <div className="alert error proc-error" role="alert">
+          <span>{error}</span>
+          <span className="proc-error-actions">
+            <button className="btn primary small" onClick={retry}>Try again</button>
+            <button className="linklike" onClick={onError}>Back to the questionnaire</button>
+          </span>
         </div>
       )}
     </section>
