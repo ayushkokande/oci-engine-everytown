@@ -72,30 +72,21 @@ export function ProfileForm({ initial, onSubmit }: { initial: Profile; onSubmit:
 
       {samples.length > 0 && (
         <div className="card samples">
-          <div className="samples-head">
-            <h2 className="section-title">Demo with a sample organization</h2>
-            <span className="muted small">From the OCI package · synthetic, not real organizations</span>
-          </div>
+          <h2 className="section-title">Choose your organization</h2>
           <div className="sample-grid">
             {samples.map((s) => (
               <button key={s.id} type="button" className={`sample-card ${p.sample_id === s.id ? "selected" : ""}`}
                 onClick={() => useSample(s)} disabled={loadingSample !== null}>
-                <span className="sample-tag">Sample {s.id}</span>
                 <strong>{s.org_name}</strong>
-                <span className="muted small">{s.profile_line}</span>
-                <span className="sample-go">{loadingSample === s.id ? "Loading…" : "Use this sample →"}</span>
+                <span className="sample-go">{loadingSample === s.id ? "Loading…" : "Select →"}</span>
               </button>
             ))}
           </div>
-          <p className="muted small">
-            Fills in the organization and all 72 answers from the package's response set. You can review or
-            change any answer before submitting.
-          </p>
         </div>
       )}
 
       <form className="card form" onSubmit={submit} noValidate>
-        <h2 className="section-title">Or enter your own organization</h2>
+        <h2 className="section-title">Or add a different organization</h2>
         <label className={`field ${errors.org_name ? "invalid" : ""}`}>
           <span>Organization name</span>
           <input value={p.org_name} onChange={(e) => update({ org_name: e.target.value })}

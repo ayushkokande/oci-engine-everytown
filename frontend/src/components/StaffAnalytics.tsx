@@ -88,7 +88,6 @@ export function StaffAnalytics() {
                       <strong>{r.org_name}</strong>
                       <div className="muted small">
                         {r.category === "grantee" ? "Grantee" : "Non-grantee"}
-                        {r.synthetic && " · synthetic"}
                         {r.context_count > 0 && <span className="chip updated-chip">added context</span>}
                       </div>
                     </td>

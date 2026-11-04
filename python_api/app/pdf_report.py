@@ -145,7 +145,7 @@ def report_lines(record: dict, resources: list | None = None) -> list[tuple[str,
             out.append(("bullet", c.get("text", "")))
 
     if record.get("research_summary"):
-        heading = ("About your organization (sample profile from the OCI package)"
+        heading = ("About your organization"
                    if record.get("research_source") == "sample_profile"
                    else "About your organization (from your website)")
         out += [("h2", heading), ("body", record["research_summary"])]
