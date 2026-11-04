@@ -35,6 +35,19 @@ make demo             # builds the SPA, serves everything on http://localhost:80
 Log in with **demo / demo123** (organization) or **staff / staff123** (staff). On the questionnaire,
 "Demo: fill with synthetic answers" loads benchmark sample A, B or C so you can submit at once.
 
+### In the hackathon workshop IDE (code-server)
+
+The app uses relative URLs, so it works behind the IDE's port proxy. From `/workshop`:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r python_api/requirements.txt
+make build      # skip if frontend/dist is already there; needs Node 20+
+make serve      # 0.0.0.0:8000, offline mock narrative
+```
+
+Open it from the **Ports** tab (port 8000), or at `https://<workshop-host>/proxy/8000/`.
+
 ### With Claude on Amazon Bedrock
 
 ```bash

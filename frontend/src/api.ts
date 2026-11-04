@@ -2,7 +2,9 @@ import type {
   Analytics, Answer, ApiConfig, IncompleteError, Profile, QuestionsPayload, ResourceInfo, SubmissionResult,
 } from "./types";
 
-const BASE = "/api";
+// Relative on purpose: works at the site root and behind path-prefix proxies
+// such as code-server's /proxy/8000/ in the hackathon workshop IDE.
+const BASE = "api";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public body?: unknown) {
