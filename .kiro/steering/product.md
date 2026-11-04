@@ -33,6 +33,8 @@ downloadable PDF report. Built for the AWS Breaking Barriers hackathon; handed o
 - Staff analytics are **aggregate only**: never name or compare individual organizations.
 - **Synthetic data only, no PII.** Sandbox AWS account only; never Everytown's account.
 - No Everytown-confidential material in the repo (it is open source).
+- **Organization research reads only the org's own website** (homepage-style, AWS only). No web
+  search or third-party data sources (decided Nov 4, 2026).
 
 ## Questionnaire facts
 - In-scope areas (default): Planning (15), Fundraising (20), Financial Management (20),

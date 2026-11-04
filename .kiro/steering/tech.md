@@ -49,6 +49,8 @@ Demo logins: `demo` / `demo123` (organization), `staff` / `staff123` (CSF staff)
 2. Score with the unchanged engine, scoped by passing only in-scope domains.
 3. Research call: fetch the org's public homepage (http/https, public IPs only, 6 s timeout); Claude
    summarises it ("say 'not stated', don't invent"). Skipped if no URL or unreadable.
+   Research is homepage-style and AWS-only by decision: read only the org's own site, never a
+   web search API or third-party source.
 4. Recommendation call: scores + every gap with next steps + research (or "no research available")
    + full Resource_Library in-prompt → JSON {overview, action_plan, recommendations[]}. Unknown
    question/resource ids are dropped.
