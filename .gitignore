@@ -33,3 +33,4 @@ python_api/.data/
 .env.local
 .hypothesis/
 .pytest_cache/
+*.tsbuildinfo
