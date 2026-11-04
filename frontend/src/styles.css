@@ -475,3 +475,9 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
 .sample-tag { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .sample-go { margin-top: auto; font-size: 0.82rem; font-weight: 700; color: var(--ink-2); }
 .sample-note { display: inline-block; font-size: 0.78rem; font-weight: 600; color: var(--medium); background: var(--medium-soft); border-radius: 99px; padding: 3px 10px; margin: 0 0 10px; }
+
+/* answer corrections */
+.change-answer-link { display: inline-block; margin-top: 10px; font-size: 0.85rem; }
+.change-answer { margin-top: 12px; border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; background: #faf7f1; }
+.change-answer p { margin: 0 0 6px; }
+.change-answer-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; }

@@ -216,3 +216,55 @@ def test_detailed_report_inline_with_analysis_and_context(client_factory):
     for heading in ("At a glance", "Where to start", "Area-by-area analysis", "To reach the next stage",
                     "Context you added", "We share one bookkeeper", "Resources referenced"):
         assert heading in text, heading
+
+
+# ------------------------------------------------------------------ answer corrections
+
+def test_change_answer_rescores_as_new_submission(client_factory):
+    """The organization flips its own answer; the engine re-scores; the original is kept."""
+    from app.scoring_adapter import score_submission
+    from app.seed import benchmark_answers
+    client, _, llm = client_factory()
+    a = client.get("/api/samples/B").json()
+    first = client.post("/api/submit", json={"profile": {"org_name": a["org_name"], "website_url": a["website_url"],
+                                                         "category": a["category"], "sample_id": "B"},
+                                             "answers": a["answers"]}).json()
+    fr8 = next(g for g in first["gaps"] if g["question_id"] == "FR8")
+    assert fr8["answer"] == "no"
+    client.post("/api/submissions/%s/revise" % first["submission_id"], json={"context": "We hold two $50K grants."})
+
+    second = client.post("/api/submissions/%s/change-answers" % first["submission_id"],
+                         json={"changes": {"FR8": "yes"}}).json()
+    assert second["submission_id"] != first["submission_id"]
+    assert second["previous_submission_id"] == first["submission_id"]
+    assert second["answer_changes"] == [{"question_id": "FR8", "text": fr8["text"], "from": "no", "to": "yes"}]
+    assert "FR8" not in {g["question_id"] for g in second["gaps"]}
+    # scores are exactly the engine's output for the corrected answers
+    corrected = dict(benchmark_answers("B", SCOPE), FR8="yes")
+    assert second["scores"] == score_submission(corrected, SCOPE)[2]
+    assert second["profile"]["sample_id"] == "B" and second["research_source"] == "sample_profile"
+    assert any("two $50K grants" in c["text"] for c in second["org_context"])
+    assert "two $50K grants" in llm.calls[-1]["prompt"]      # context carried into the new narrative
+
+    original = client.get("/api/submissions/" + first["submission_id"]).json()
+    assert original["superseded_by"] == second["submission_id"]
+    assert original["scores"] == first["scores"]             # original untouched
+    again = client.post("/api/submissions/%s/change-answers" % first["submission_id"], json={"changes": {"FR9": "yes"}})
+    assert again.status_code == 409 and again.json()["superseded_by"] == second["submission_id"]
+
+    ids = [r["submission_id"] for r in client.get("/api/staff/assessments").json()["assessments"]]
+    assert second["submission_id"] in ids and first["submission_id"] not in ids
+    assert client.get("/api/analytics").json()["total_submissions"] == 1
+
+
+def test_change_answer_validation(client_factory):
+    client, _, _ = client_factory()
+    sid = _submit(client, "A")["submission_id"]
+    bad = [{"changes": {}}, {"changes": {"ZZ1": "yes"}}, {"changes": {"GV1": "yes"}}, {"changes": {"PL2": "maybe"}}]
+    for body in bad:
+        assert client.post("/api/submissions/%s/change-answers" % sid, json=body).status_code == 422, body
+    same = client.post("/api/submissions/%s/change-answers" % sid, json={"changes": {"PL2": "no"}})
+    assert same.status_code == 422 and "already answered" in same.json()["detail"]
+    # PL1 is reverse-coded: answering yes ("we focus on short-term planning") creates the gap
+    r = client.post("/api/submissions/%s/change-answers" % sid, json={"changes": {"PL1": "yes"}}).json()
+    assert "PL1" in {g["question_id"] for g in r["gaps"]}

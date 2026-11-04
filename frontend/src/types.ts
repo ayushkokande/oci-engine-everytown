@@ -81,6 +81,15 @@ export interface Gap {
   next_steps: string[];
   priority_score: number;
   priority: Band;
+  /** The organization's own answer to this statement (lets it correct the answer). */
+  answer?: Answer | null;
+}
+
+export interface AnswerChange {
+  question_id: string;
+  text: string;
+  from: Answer | null;
+  to: Answer;
 }
 
 export interface Recommendation extends Gap {
@@ -150,6 +159,9 @@ export interface SubmissionResult {
   revision_status?: RevisionStatus;
   revision_error?: string | null;
   revision_count?: number;
+  previous_submission_id?: string | null;
+  answer_changes?: AnswerChange[];
+  superseded_by?: string | null;
 }
 
 export interface AssessmentChatResponse {

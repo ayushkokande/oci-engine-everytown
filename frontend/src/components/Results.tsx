@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api";
 import { sessionStore, storage } from "../config";
-import type { Band, ChatMessage, Recommendation, ResourceInfo, SubmissionResult } from "../types";
+import type { Answer, Band, ChatMessage, Recommendation, ResourceInfo, SubmissionResult } from "../types";
 import { AssessmentChat } from "./AssessmentChat";
 import { StageCells } from "./StageProfileView";
 
@@ -16,6 +16,46 @@ const SUGGESTIONS = [
   "We already do some of this informally. Does the feedback account for that?",
   "Why is our first recommendation the place to start?",
 ];
+
+const label = (a: Answer | null | undefined) => (a === "yes" ? "Yes" : a === "no" ? "No" : "not answered");
+
+/**
+ * Lets the organization correct its own answer to one statement. The engine re-scores a
+ * corrected copy as a new submission; the AI never changes answers.
+ */
+function ChangeAnswer({ r, answer, onConfirm }: {
+  r: Recommendation;
+  answer: Answer | null | undefined;
+  onConfirm: (to: Answer) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (answer !== "yes" && answer !== "no") return null;
+  const to: Answer = answer === "yes" ? "no" : "yes";
+  if (!open) {
+    return (
+      <button type="button" className="linklike change-answer-link" onClick={() => setOpen(true)}>
+        Change my answer
+      </button>
+    );
+  }
+  return (
+    <div className="change-answer" role="group" aria-label={`Change your answer to ${r.question_id}`}>
+      <p>
+        You answered <strong>{label(answer)}</strong> to: “{r.text}” Change it to <strong>{label(to)}</strong>?
+      </p>
+      <p className="muted small">
+        This re-scores a corrected copy of your assessment with the OCI engine. Your other answers stay the
+        same, the original assessment is kept, and any context you added carries over.
+      </p>
+      <div className="change-answer-actions">
+        <button type="button" className="btn primary small" onClick={() => onConfirm(to)}>
+          Change to {label(to)} and re-score
+        </button>
+        <button type="button" className="linklike" onClick={() => setOpen(false)}>Cancel</button>
+      </div>
+    </div>
+  );
+}
 
 async function waitForRevision(id: string): Promise<SubmissionResult> {
   const deadline = Date.now() + MAX_WAIT_MS;
@@ -50,10 +90,11 @@ function RecBody({ r, resById }: { r: Recommendation; resById: Record<string, Re
   );
 }
 
-export function Results({ result, onResultChange, onStartOver }: {
+export function Results({ result, onResultChange, onStartOver, onChangeAnswer }: {
   result: SubmissionResult;
   onResultChange: (r: SubmissionResult) => void;
   onStartOver: () => void;
+  onChangeAnswer?: (questionId: string, to: Answer) => void;
 }) {
   const id = result.submission_id;
   const chatKey = `oci.feedbackChat.${id}`;
@@ -120,6 +161,11 @@ export function Results({ result, onResultChange, onStartOver }: {
     }
   };
 
+  const answerOf = Object.fromEntries(result.gaps.map((g) => [g.question_id, g.answer]));
+  const changeAnswer = (r: Recommendation) => (onChangeAnswer && !result.superseded_by
+    ? <ChangeAnswer r={r} answer={answerOf[r.question_id]} onConfirm={(to) => onChangeAnswer(r.question_id, to)} />
+    : null);
+
   const plannedToggle = (r: Recommendation) => (
     <label className="plan-toggle">
       <input type="checkbox" checked={!!planned[r.question_id]}
@@ -151,6 +197,19 @@ export function Results({ result, onResultChange, onStartOver }: {
         </div>
       </div>
 
+      {(result.answer_changes?.length ?? 0) > 0 && (
+        <div className="alert ok" role="status">
+          <strong>Re-scored with your corrected answer{result.answer_changes!.length > 1 ? "s" : ""}.</strong>{" "}
+          {result.answer_changes!.map((c) => `${c.question_id} “${c.text}” ${label(c.from)} → ${label(c.to)}`).join("; ")}.
+          {" "}Scores, stages and priorities were recalculated by the OCI engine; your original assessment is kept.
+        </div>
+      )}
+      {result.superseded_by && (
+        <div className="alert warn" role="status">
+          You corrected an answer in this assessment, so a newer, re-scored version exists. This one is kept
+          for reference and no longer counts in network figures.
+        </div>
+      )}
       {degraded && (
         <div className="alert warn" role="status">
           <strong>Personalized narrative couldn't be generated this time.</strong> Your scores and priorities
@@ -183,6 +242,7 @@ export function Results({ result, onResultChange, onStartOver }: {
                 </header>
                 <h3 className="rec-statement">{r.text}</h3>
                 <RecBody r={r} resById={resById} />
+                {changeAnswer(r)}
               </article>
             ))}
             {startHere.length === 0 && <p className="muted">No capacity gaps were found in this assessment.</p>}
@@ -247,7 +307,7 @@ export function Results({ result, onResultChange, onStartOver }: {
             id="refine"
             title="Refine this feedback"
             intro={<>Tell us what the assessment couldn't know: your team size, what you already do informally,
-              deadlines or constraints. Then update your feedback. Your answers and scores stay as submitted.</>}
+              deadlines or constraints. Then update your feedback. Your answers and scores stay as submitted; to correct an answer, use “Change my answer” on that recommendation.</>}
             placeholder="For example: We have three staff and our board meets quarterly."
             suggestions={SUGGESTIONS}
             assistantName="Feedback guide"
@@ -310,6 +370,7 @@ export function Results({ result, onResultChange, onStartOver }: {
                   <div className="rec-row-body">
                     <RecBody r={r} resById={resById} />
                     {plannedToggle(r)}
+                    {changeAnswer(r)}
                   </div>
                 </details>
               ))}
