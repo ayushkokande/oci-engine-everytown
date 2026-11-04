@@ -37,7 +37,7 @@ h1 { font-family: var(--serif); font-size: clamp(1.7rem, 3vw, 2.35rem); font-wei
 h2 { font-size: 1.15rem; }
 h3 { font-size: 1rem; }
 p { margin: 0 0 0.8em; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 a { color: var(--ink-2); }
 code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
 
@@ -165,7 +165,9 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .qcard-meta { display: flex; gap: 10px; align-items: center; font-size: 0.85rem; color: var(--text); flex-wrap: wrap; }
 .qcard-prompt { margin: 26px 0 6px; color: var(--muted); font-size: 0.9rem; }
-.qcard-text { font-family: var(--serif); font-weight: 500; font-size: clamp(1.35rem, 2.4vw, 1.75rem); line-height: 1.35; margin-bottom: 28px; max-width: 34ch; }
+.qcard-question { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.qcard-text { font-family: var(--serif); font-weight: 500; font-size: clamp(1.35rem, 2.4vw, 1.75rem); line-height: 1.35; margin: 0; max-width: 34ch; }
+.explain-btn { flex: none; white-space: nowrap; }
 .yn { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 460px; }
 .yn-btn {
   display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 12px; cursor: pointer;
@@ -181,6 +183,7 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
 .qlist-domain h3 { font-family: var(--serif); font-size: 1.15rem; margin-bottom: 10px; }
 .qrow { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 10px 8px; border-top: 1px solid var(--line); border-radius: 6px; }
 .qrow.missing { background: var(--medium-soft); }
+.qrow-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
 .qrow-yn { display: flex; gap: 6px; }
 .mini-yn { border: 1px solid var(--line-2); background: #fff; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
 .mini-yn.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
@@ -190,6 +193,60 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
   background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 12px 18px; box-shadow: var(--shadow); font-size: 0.9rem;
 }
 .submit-bar.ready { border-color: var(--accent); background: #f3faf8; }
+
+/* question explanation chat */
+.chat-dialog {
+  width: min(680px, calc(100vw - 32px)); max-height: min(780px, calc(100vh - 32px));
+  border: 0; border-radius: 16px; padding: 0; color: var(--text); background: var(--surface);
+  box-shadow: 0 24px 70px rgba(20, 33, 52, .28); overflow: hidden;
+}
+.chat-dialog::backdrop { background: rgba(24, 34, 49, .55); backdrop-filter: blur(2px); }
+.chat-shell { display: flex; flex-direction: column; height: min(680px, calc(100vh - 32px)); }
+.chat-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 18px;
+  padding: 20px 22px 16px; border-bottom: 1px solid var(--line); background: #fbf9f4;
+}
+.chat-header .eyebrow { margin-bottom: 4px; }
+.chat-header h2 { margin: 0; font-family: var(--serif); font-size: 1.35rem; }
+.chat-close {
+  border: 0; background: transparent; color: var(--ink-2); text-decoration: underline;
+  font-weight: 600; cursor: pointer; padding: 4px;
+}
+.chat-statement {
+  margin: 0; padding: 14px 22px; background: var(--accent-soft); color: var(--ink);
+  border-bottom: 1px solid #c9e2dd; font-family: var(--serif); font-size: 1.02rem; line-height: 1.45;
+}
+.chat-messages {
+  min-height: 0; flex: 1 1 210px; overflow-y: auto; padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 12px; background: #fcfbf8;
+}
+.chat-message { max-width: 88%; }
+.chat-message strong { display: block; margin-bottom: 3px; font-size: .76rem; color: var(--muted); }
+.chat-message p { margin: 0; padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; }
+.chat-message.user { align-self: flex-end; }
+.chat-message.user strong { text-align: right; }
+.chat-message.user p { background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+.chat-message.assistant { align-self: flex-start; }
+.chat-message.assistant p { background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.chat-status { align-self: flex-start; color: var(--muted); font-size: .85rem; padding: 4px 2px; }
+.chat-error { margin: 0 22px 10px; color: var(--danger); font-size: .86rem; font-weight: 600; }
+.chat-retry { align-self: flex-start; margin: 0 22px 12px; }
+.chat-limit {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin: 0 22px 12px; color: var(--muted); font-size: .84rem;
+}
+.chat-composer { padding: 14px 22px 8px; border-top: 1px solid var(--line); background: #fff; }
+.chat-composer > label { display: block; margin-bottom: 6px; font-size: .85rem; font-weight: 700; }
+.chat-compose-row { display: flex; align-items: stretch; gap: 10px; }
+.chat-compose-row textarea {
+  flex: 1; resize: vertical; min-height: 58px; max-height: 150px; min-width: 0;
+  border: 1px solid var(--line-2); border-radius: 10px; padding: 9px 11px; line-height: 1.4;
+}
+.chat-compose-row textarea:focus, .chat-close:focus-visible, .chat-messages:focus-visible {
+  outline: 2px solid var(--ink-2); outline-offset: 2px;
+}
+.chat-compose-row .btn { align-self: flex-end; }
+.chat-notice { margin: 0; padding: 3px 22px 16px; color: var(--muted); font-size: .75rem; }
 
 /* processing */
 .processing { text-align: left; }
@@ -292,9 +349,14 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
   .quiz-rail { position: static; }
   .main { padding: 20px 16px 48px; }
   .qcard { padding: 24px 20px; }
+  .qcard-question { flex-direction: column; gap: 12px; }
+  .qrow { grid-template-columns: 1fr; }
+  .qrow-actions { justify-content: space-between; }
   .kbd-hint { display: none; }
   .topbar { padding: 12px 16px; }
   .mode-pill { display: none; }
+  .chat-compose-row { flex-direction: column; }
+  .chat-compose-row .btn { align-self: stretch; }
 }
 .proc-error { display: flex; flex-direction: column; gap: 10px; }
 .proc-error-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }

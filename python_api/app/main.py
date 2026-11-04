@@ -16,18 +16,20 @@ import threading
 from collections import OrderedDict
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .analytics import aggregate, load_for_analytics
 from .config import Settings, load_settings
-from .llm import LLMClient, build_llm
+from .llm import LLMClient, ModelError, build_llm
 from .orchestrator import merge_recommendations, orchestrate
 from .pdf_report import render_pdf
+from .question_chat import explain_question
 from .questions import missing_answers, normalise_answers, questions_payload, validate_domain_config
 from .resources import load_library
 from .scoring_adapter import gaps_from_recs, score_submission
@@ -50,6 +52,19 @@ class SubmitRequest(BaseModel):
     answers: dict[str, str] = Field(default_factory=dict)
 
 
+class QuestionChatMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class QuestionChatRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    messages: list[QuestionChatMessage] = Field(min_length=1, max_length=11)
+
+
 def create_app(settings: Settings | None = None, store: SubmissionStore | None = None,
                llm: LLMClient | None = None) -> FastAPI:
     settings = settings or load_settings()
@@ -57,6 +72,16 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     store = store or build_store(settings)
     llm = llm or build_llm(settings)
     library = load_library()
+    questionnaire = questions_payload(settings.in_scope_domains)
+    question_index = {
+        question["id"]: {
+            **question,
+            "domain_id": domain["id"],
+            "domain_name": domain["name"],
+        }
+        for domain in questionnaire["domains"]
+        for question in domain["questions"]
+    }
     recent: "OrderedDict[str, dict]" = OrderedDict()  # last results, in case a store write fails
     recent_lock = threading.Lock()  # background narration threads write to `recent`
 
@@ -88,7 +113,41 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
 
     @app.get("/api/questions")
     def questions():
-        return questions_payload(settings.in_scope_domains)
+        return questionnaire
+
+    @app.post("/api/questions/{question_id}/chat")
+    def question_chat(question_id: str, req: QuestionChatRequest):
+        question = question_index.get(question_id)
+        if question is None:
+            raise HTTPException(404, "unknown or out-of-scope question")
+
+        messages = [message.model_dump() for message in req.messages]
+        for index, message in enumerate(messages):
+            expected_role = "user" if index % 2 == 0 else "assistant"
+            if message["role"] != expected_role:
+                raise HTTPException(422, "chat messages must alternate user and assistant roles")
+            if message["role"] == "user" and len(message["content"]) > 1000:
+                raise HTTPException(422, "user messages must be 1000 characters or fewer")
+        if messages[-1]["role"] != "user":
+            raise HTTPException(422, "the final chat message must be from the user")
+        if sum(len(message["content"]) for message in messages) > 12000:
+            raise HTTPException(422, "chat history is too long")
+
+        try:
+            reply = explain_question(
+                llm,
+                question,
+                messages,
+                max_tokens=settings.question_chat_max_tokens,
+            ).strip()
+        except ModelError as error:
+            log.warning("question chat model failure for %s: %s", question_id, error.code)
+            raise HTTPException(503, "Question explanation is temporarily unavailable. Please try again.")
+        if not reply:
+            raise HTTPException(502, "The model returned an empty explanation. Please try again.")
+        if len(reply) > 4000:
+            reply = reply[:3997].rstrip() + "..."
+        return {"question_id": question_id, "reply": reply}
 
     @app.get("/api/resources")
     def resources():

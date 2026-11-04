@@ -77,6 +77,7 @@ reject the `temperature` setting the app sends.
 | `OCI_LOCAL_STORE_DIR` | `python_api/.data` | Local store root |
 | `OCI_SEED_ON_STARTUP` | `true` | Seed 9 synthetic submissions if the store is empty |
 | `OCI_BEDROCK_MAX_TOKENS` | `16000` | Output budget for the recommendation call. On Sonnet 4.6, 60 gaps needed ~9,200 tokens and 71 gaps ~10,000; 8,000 cut the JSON off. |
+| `OCI_BEDROCK_CHAT_MAX_TOKENS` | `500` | Output budget for each question-explanation chat response. |
 | `OCI_ASYNC_ORCHESTRATION` | `false` | `true` = `POST /api/submit` saves the scores and returns 202 at once; the UI polls until Claude's narrative is saved. Use it behind proxies with a 30 s timeout. |
 | `VITE_ORG_USER` / `VITE_ORG_PASSWORD` / `VITE_STAFF_*` | demo creds | Mocked login (front end) |
 
@@ -100,6 +101,7 @@ throttling/transient errors with exponential backoff plus jitter.
 | Endpoint | |
 |---|---|
 | `GET /api/questions` | In-scope questionnaire |
+| `POST /api/questions/{id}/chat` | Clarify one canonical statement using a bounded, question-scoped chat |
 | `POST /api/submit` | Validate → score → research → recommend → persist |
 | `GET /api/submissions/{id}` | Stored result (no answers) |
 | `GET /api/report/{id}` | PDF, recommendations ordered High → Medium → Low |

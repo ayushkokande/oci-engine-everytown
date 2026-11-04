@@ -13,6 +13,31 @@ export function checkCredentials(role: "org" | "staff", user: string, password: 
   return user.trim() === c.user && password === c.password;
 }
 
+export const sessionStore = {
+  get<T>(key: string, fallback: T): T {
+    try {
+      const value = window.sessionStorage.getItem(key);
+      return value ? (JSON.parse(value) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  set(key: string, value: unknown) {
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      /* storage unavailable: state stays in memory */
+    }
+  },
+  remove(key: string) {
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  },
+};
+
 export const storage = {
   get<T>(key: string, fallback: T): T {
     try {

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { storage } from "./config";
-import type { Answer, ApiConfig, AppStep, Profile, Role, SubmissionResult } from "./types";
+import { sessionStore, storage } from "./config";
+import type {
+  Answer, ApiConfig, AppStep, ChatMessage, Profile, QuestionChats, Role, SubmissionResult,
+} from "./types";
 import { Login } from "./components/Login";
 import { ProfileForm } from "./components/ProfileForm";
 import { Questionnaire } from "./components/Questionnaire";
@@ -10,6 +12,7 @@ import { Results } from "./components/Results";
 import { StaffAnalytics } from "./components/StaffAnalytics";
 
 const EMPTY_PROFILE: Profile = { org_name: "", website_url: "", category: "grantee" };
+const QUESTION_CHATS_KEY = "oci.questionChats";
 
 export default function App() {
   const [step, setStep] = useState<AppStep>("login");
@@ -18,12 +21,24 @@ export default function App() {
   const [pending, setPending] = useState<Record<string, Answer> | null>(null);
   const [result, setResult] = useState<SubmissionResult | null>(null);
   const [config, setConfig] = useState<ApiConfig | null>(null);
+  const [questionChats, setQuestionChats] = useState<QuestionChats>(() =>
+    sessionStore.get<QuestionChats>(QUESTION_CHATS_KEY, {}));
 
   useEffect(() => {
     api.config().then(setConfig).catch(() => setConfig(null));
   }, []);
 
+  useEffect(() => {
+    sessionStore.set(QUESTION_CHATS_KEY, questionChats);
+  }, [questionChats]);
+
+  const clearQuestionChats = () => {
+    setQuestionChats({});
+    sessionStore.remove(QUESTION_CHATS_KEY);
+  };
+
   const signOut = () => {
+    clearQuestionChats();
     setRole(null);
     setResult(null);
     setStep("login");
@@ -31,6 +46,7 @@ export default function App() {
 
   const startOver = () => {
     storage.remove("oci.answers");
+    clearQuestionChats();
     setResult(null);
     setStep("profile");
   };
@@ -104,6 +120,10 @@ export default function App() {
         {step === "questionnaire" && (
           <Questionnaire
             profile={profile}
+            questionChats={questionChats}
+            onQuestionChatChange={(questionId: string, messages: ChatMessage[]) => {
+              setQuestionChats((current) => ({ ...current, [questionId]: messages }));
+            }}
             onBack={() => setStep("profile")}
             onSubmit={(answers) => {
               setPending(answers);

@@ -33,6 +33,8 @@ class Settings:
     bedrock_model_id: str = DEFAULT_MODEL_ID
     # Measured on Sonnet 4.6: a 60-gap submission needs ~9,200 output tokens, 71 gaps ~10,000.
     bedrock_max_tokens: int = 16000
+    # A short, separate budget for one question-explanation chat response.
+    question_chat_max_tokens: int = 500
     # "local" writes JSON files under local_store_dir using the same key scheme
     # as S3; "s3" writes to the submissions bucket.
     store_backend: str = "local"
@@ -56,6 +58,7 @@ def load_settings() -> Settings:
         llm_mode=env.get("OCI_LLM_MODE", "bedrock").lower(),
         bedrock_model_id=env.get("OCI_BEDROCK_MODEL_ID", DEFAULT_MODEL_ID),
         bedrock_max_tokens=int(env.get("OCI_BEDROCK_MAX_TOKENS", "16000")),
+        question_chat_max_tokens=int(env.get("OCI_BEDROCK_CHAT_MAX_TOKENS", "500")),
         store_backend=env.get("OCI_STORE", "local").lower(),
         local_store_dir=Path(env.get("OCI_LOCAL_STORE_DIR", str(API_ROOT / ".data"))),
         s3_bucket=env.get("OCI_S3_BUCKET") or None,
