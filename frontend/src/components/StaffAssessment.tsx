@@ -79,7 +79,7 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
       </p>
 
       {data.orchestration_status === "seed" && (
-        <div className="alert warn">Synthetic seed assessment: it has scores but no AI narrative.</div>
+        <div className="alert warn">Pre-loaded assessment: it has scores but no AI narrative.</div>
       )}
 
       <div className="results-grid">

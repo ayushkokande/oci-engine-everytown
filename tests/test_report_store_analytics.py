@@ -231,7 +231,7 @@ def test_sample_submission_uses_profile_instead_of_website(client_factory):
     assert [c["kind"] for c in llm.calls] == ["recommend"]
     assert 'source="sample_profile"' in llm.calls[0]["prompt"] and a["description"] in llm.calls[0]["prompt"]
     pdf = _pdf_text(client.get("/api/report/" + body["submission_id"]).content)
-    assert "sample profile from the OCI package" in pdf
+    assert "About your organization" in pdf and "sample" not in pdf.lower()
 
 
 def test_renamed_sample_is_treated_as_a_normal_org(client_factory):
