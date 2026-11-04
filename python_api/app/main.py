@@ -35,7 +35,7 @@ from .question_chat import explain_question
 from .questions import missing_answers, normalise_answers, questions_payload, validate_domain_config
 from .resources import load_library
 from .scoring_adapter import gaps_from_recs, score_submission
-from .seed import SAMPLE_ORGS, benchmark_answers, sample_org, seed_if_empty
+from .seed import SAMPLE_ORGS, benchmark_answers, ensure_samples, is_retired_seed, sample_org
 from .stage_profile import STAGE_EXPLAINER, stage_profile
 from .store import SubmissionRecord, SubmissionStore, build_store, new_submission_id
 
@@ -142,9 +142,9 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     async def lifespan(_app):
         if settings.seed_on_startup:
             try:
-                n = seed_if_empty(store, settings.in_scope_domains)
+                n = ensure_samples(store, settings.in_scope_domains)
                 if n:
-                    log.info("seeded %d synthetic submissions", n)
+                    log.info("added %d package sample organizations", n)
             except Exception:  # analytics just starts empty
                 log.exception("seeding failed")
         yield
@@ -435,7 +435,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     # Login is mocked in the front end for the MVP; real access control is still to be decided.
 
     def _all_records() -> list[SubmissionRecord]:
-        by_id = {r.submission_id: r for r in store.list_records()}
+        by_id = {r.submission_id: r for r in store.list_records() if not is_retired_seed(r)}
         with recent_lock:  # this process's copy is never older than the stored one
             for sid, data in recent.items():
                 by_id[sid] = SubmissionRecord.from_dict(copy.deepcopy(data))

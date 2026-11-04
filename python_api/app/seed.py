@@ -61,10 +61,29 @@ def seed_records(in_scope: list[str], now: datetime | None = None) -> list[Submi
     return records
 
 
+def is_retired_seed(record: SubmissionRecord) -> bool:
+    """Generated seed data from before the demo switched to the package samples
+    ("Synthetic Variant 1-6", and old A/B/C seeds without a sample link).
+
+    Stores are append-only for the app (its IAM role cannot delete), so these are
+    hidden from staff views and analytics instead of removed.
+    """
+    return bool(record.synthetic) and not (record.profile or {}).get("sample_id")
+
+
+def ensure_samples(store, in_scope: list[str]) -> int:
+    """Add any of the three package sample organizations the store doesn't have yet."""
+    present = {(r.profile or {}).get("sample_id") for r in store.list_records()
+               if r.synthetic and not is_retired_seed(r)}
+    added = 0
+    for rec in seed_records(in_scope):
+        if rec.profile["sample_id"] not in present:
+            store.put(rec)
+            added += 1
+    return added
+
+
 def seed_if_empty(store, in_scope: list[str]) -> int:
     if not store.is_empty():
         return 0
-    records = seed_records(in_scope)
-    for r in records:
-        store.put(r)
-    return len(records)
+    return ensure_samples(store, in_scope)

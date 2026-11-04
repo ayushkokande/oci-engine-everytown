@@ -244,3 +244,28 @@ def test_renamed_sample_is_treated_as_a_normal_org(client_factory):
     assert "sample_id" not in body["profile"]
     assert client.post("/api/submit", json={"profile": {"org_name": "X", "sample_id": "Z"},
                                             "answers": a["answers"]}).status_code == 422
+
+
+def test_existing_store_gets_samples_and_hides_retired_seeds(client_factory, tmp_path):
+    """A store seeded by an older build (generated variants, unlinked A/B/C) still demos cleanly."""
+    from app.seed import ensure_samples, seed_records as new_seeds
+    from app.store import LocalSubmissionStore, SubmissionRecord
+    store = LocalSubmissionStore(tmp_path / "old")
+    for name in ["Synthetic Variant 1", "Synthetic Variant 2", "Southside Youth Peace Collective"]:
+        old = new_seeds(SCOPE)[0].to_dict()
+        old["submission_id"] = new_submission_id(name)
+        old["profile"] = {"org_name": name, "website_url": "", "category": "grantee"}  # no sample_id
+        store.put(SubmissionRecord.from_dict(old))
+    real = new_seeds(SCOPE)[1].to_dict()
+    real.update(submission_id=new_submission_id("Bubbles"), synthetic=False,
+                profile={"org_name": "Bubbles", "website_url": "", "category": "grantee"})
+    store.put(SubmissionRecord.from_dict(real))
+
+    assert ensure_samples(store, SCOPE) == 3
+    assert ensure_samples(store, SCOPE) == 0          # idempotent
+    client, _, _ = client_factory(store=store, seed=True)
+    with client:
+        names = sorted(r["org_name"] for r in client.get("/api/staff/assessments").json()["assessments"])
+        assert names == sorted(["Bubbles", "Southside Youth Peace Collective",
+                                "Riverbend Violence Interruption Network", "Metro Community Safety Alliance"])
+        assert client.get("/api/analytics").json()["total_submissions"] == 4
