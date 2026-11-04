@@ -1,0 +1,118 @@
+# Everytown OCI Assessment — MVP
+
+A CVI organization logs in, describes itself, answers a quiz-style questionnaire (Planning,
+Fundraising, Financial Management, and Monitoring, Learning & Evaluation — 72 statements),
+and gets its capacity scores plus personalized, prioritized recommendations and a PDF report.
+CSF staff get an aggregate-only analytics view.
+
+Built from the Kiro spec in [`.kiro/specs/everytown-oci-assessment/`](.kiro/specs/everytown-oci-assessment/).
+
+```
+frontend/      React + TypeScript SPA (login, profile, questionnaire, processing, results, staff analytics)
+python_api/    FastAPI + boto3: questions, completeness check, scoring, Bedrock pipeline, PDF, analytics
+  engine/ utils/ data/ verify_benchmark.py   <- vendored byte-for-byte from the reference implementation
+  resource_library/                          <- non-confidential resources injected into the prompt
+infra/         CloudFormation: private S3 bucket + least-privilege IAM role (us-west-2)
+tests/         pytest + hypothesis (Bedrock and S3 always mocked)
+```
+
+## The one rule
+
+**Code computes every score; the model only writes narrative.** The scoring engine is vendored
+unchanged (checksums in `python_api/ENGINE_CHECKSUMS.sha256`, checked by a test) and runs before any
+model call. If Bedrock fails or returns junk, the API still returns the exact engine scores with
+`orchestration_status: "error"`, and the UI and PDF fall back to the questionnaire's own next steps.
+
+## Quick start
+
+Requires Python 3.10+ and Node 20+.
+
+```bash
+make install          # pip install -r requirements-dev.txt && npm install
+make demo             # builds the SPA, serves everything on http://localhost:8000 with OFFLINE MOCK narrative
+```
+
+Log in with **demo / demo123** (organization) or **staff / staff123** (staff). On the questionnaire,
+"Demo: fill with synthetic answers" loads benchmark sample A, B or C so you can submit at once.
+
+### With Claude on Amazon Bedrock
+
+```bash
+export AWS_PROFILE=<your sandbox profile>     # credentials for the hackathon sandbox account only
+export OCI_LLM_MODE=bedrock                    # the default
+export OCI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-5-20250929-v1:0   # any enabled Claude profile in us-west-2
+make dev-api                                   # :8000
+make dev-web                                   # :5173 (hot reload, proxies /api)
+```
+
+Model access must be enabled once for the account in the Bedrock console (us-west-2). The default
+model id is a placeholder; use whichever Claude inference profile your sandbox has enabled.
+
+## Configuration (environment variables)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OCI_IN_SCOPE_DOMAINS` | `PL,FR,FM,ML` | Domains assessed. Any of PL FR GV HR FM ML CE TI. Validated at startup. |
+| `OCI_LLM_MODE` | `bedrock` | `bedrock` = Claude on Bedrock; `mock` = offline placeholder text, no model called |
+| `OCI_BEDROCK_MODEL_ID` | Sonnet 4.5 US profile | Model / inference profile id |
+| `OCI_AWS_REGION` | `us-west-2` | Region for Bedrock and S3 |
+| `OCI_STORE` | `local` | `local` (JSON files, same key scheme) or `s3` |
+| `OCI_S3_BUCKET` | – | Bucket from the stack output, when `OCI_STORE=s3` |
+| `OCI_LOCAL_STORE_DIR` | `python_api/.data` | Local store root |
+| `OCI_SEED_ON_STARTUP` | `true` | Seed 9 synthetic submissions if the store is empty |
+| `VITE_ORG_USER` / `VITE_ORG_PASSWORD` / `VITE_STAFF_*` | demo creds | Mocked login (front end) |
+
+## How a submission flows
+
+`POST /api/submit` →
+1. **Completeness check.** Every in-scope statement needs `yes`/`no`, or HTTP 422 with `missing_count`/`missing_ids`. The engine is never called for an incomplete submission (it would silently count blanks as favourable).
+2. **Scoring.** The unchanged engine, scoped by passing only the in-scope domains. Priority bands are percentile thirds *of this submission*, so the UI and PDF label them as relative.
+3. **Research call.** The API fetches the org's public homepage (http/https, public IPs only, 6 s timeout), and Claude summarises it with "say 'not stated', don't invent" instructions. If there's no URL or it can't be read, this step is skipped.
+4. **Recommendation call.** Claude gets the scores, every gap with its next steps, the research summary (or an explicit "no research available" note), and the whole Resource_Library, and returns JSON: overview, 30/60–90/3–6-month action plan, and one narrative per gap. Unknown question ids and resource ids are dropped; scores and bands are never taken from the model.
+5. **Persist** to `submissions/<YYYY>/<MM>/<submission_id>.json` (S3 or local). If the write fails, the response still carries the scores and `persisted: false`.
+
+Bedrock calls go through the Converse API, are held under 1 request/second, and retry
+throttling/transient errors with exponential backoff plus jitter.
+
+| Endpoint | |
+|---|---|
+| `GET /api/questions` | In-scope questionnaire |
+| `POST /api/submit` | Validate → score → research → recommend → persist |
+| `GET /api/submissions/{id}` | Stored result (no answers) |
+| `GET /api/report/{id}` | PDF, recommendations ordered High → Medium → Low |
+| `GET /api/analytics?from=&to=&category=` | Aggregate-only staff figures |
+| `GET /api/samples/{A,B,C}` | Demo helper: synthetic benchmark answers |
+
+The design doc specifies these paths without the `/api` prefix; the prefix lets one process serve
+both the API and the built SPA.
+
+## Resource library
+
+`python_api/resource_library/*.md` are injected in full into the recommendation prompt. The six `R*`
+entries shipped here are **starter entries written for the MVP** (general nonprofit practice, not
+Everytown guidance). Replace them with cleared CVI materials; confidential references stay in the
+git-ignored `04_Reference_Materials/` or `private/` folders.
+
+## Tests
+
+```bash
+make test       # verify_benchmark.py (A/B/C PASS) + pytest
+make lint       # cfn-lint infra/*.yaml
+```
+
+The tests cover design Properties 3–14: questionnaire scope, exact completeness, scoring withheld
+until complete, scores independent of any model output or failure, relative bands, PL1 reverse-coding,
+benchmark fidelity, call order, prompt grounding, PDF contents and band order, analytics correctness
+and aggregate-only output. They also cover Bedrock retry/throttle, S3 key scheme, write-failure
+handling, research URL safety, and a static infra scan. CI runs all of it plus the front-end build.
+
+## Deploying the AWS resources
+
+See [`infra/README.md`](infra/README.md).
+
+## Not done yet
+
+- Front-end unit tests (spec tasks 7.2, 7.4, 7.6, 7.9 are optional and not written).
+- Stretch goals: Fargate + CloudFront hosting, Bedrock Knowledge Base RAG, tone shaping.
+- Live Bedrock output has not been tested from this repo yet; run one real submission in the sandbox
+  and check the narrative quality and token use (the prompt asks for one narrative per gap, up to 72).
