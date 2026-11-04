@@ -120,6 +120,7 @@ throttling/transient errors with exponential backoff plus jitter.
 | `GET /api/submissions/{id}` | Stored result (no answers) |
 | `POST /api/submissions/{id}/feedback-chat` | Organization asks about its feedback and adds context (grounded in its own assessment) |
 | `POST /api/submissions/{id}/revise` | `{context}`: regenerate the narrative with the organization's added context. Scores, stages, gaps and bands are never touched; earlier narrative versions are kept. 202 + polling when `OCI_ASYNC_ORCHESTRATION=true` |
+| `POST /api/submissions/{id}/change-answers` | The organization corrects its own answers; the engine re-scores them as a new, linked submission (original kept and marked superseded) |
 | `GET /api/report/{id}[?inline=true]` | Detailed PDF: at a glance, where to start, action plan, area-by-area analysis, added context, every recommendation High → Medium → Low, resources |
 | `GET /api/analytics?from=&to=&category=` | Network aggregates, including the average stage profile per area |
 | `GET /api/staff/assessments?from=&to=&category=` | Staff only: named list of individual assessments |

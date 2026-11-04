@@ -93,7 +93,7 @@ def test_scores_independent_of_model(client_factory, sample, output, fail):
     client, _, _ = client_factory(llm=llm)
     body = client.post("/api/submit", json={"profile": dict(PROFILE, website_url=""), "answers": answers}).json()
     assert body["scores"] == display
-    assert body["gaps"] == gaps
+    assert [{k: v for k, v in g.items() if k != "answer"} for g in body["gaps"]] == gaps
     for r in body["recommendations"]:
         g = next(x for x in gaps if x["question_id"] == r["question_id"])
         assert (r["priority"], r["priority_score"], r["text"]) == (g["priority"], g["priority_score"], g["text"])

@@ -86,6 +86,11 @@ export const api = {
     postJson<AssessmentChatResponse>(`/submissions/${encodeURIComponent(id)}/feedback-chat`, { messages },
       CHAT_UNREACHABLE).then((r) => r.body.reply),
   /** Regenerate the narrative with added context. Status 202 means it is running in the background. */
+  /** The organization corrects its own answers; the engine re-scores them as a new submission. */
+  changeAnswers: (id: string, changes: Record<string, Answer>) =>
+    postJson<SubmissionResult>(`/submissions/${encodeURIComponent(id)}/change-answers`, { changes },
+      "Couldn't reach the assessment server. Nothing was changed; try again.").then((r) => r.body),
+
   revise: (id: string, context: string) =>
     postJson<SubmissionResult>(`/submissions/${encodeURIComponent(id)}/revise`, { context },
       "Couldn't reach the assessment server. Your context is still in the chat; try again."),

@@ -43,6 +43,11 @@ class SubmissionRecord:
     revision_error: str | None = None
     revision_count: int = 0
     revisions: list = field(default_factory=list)            # earlier narrative versions, newest last
+    # Answer corrections: the organization changes its own answers and the engine re-scores them as
+    # a NEW submission. The model never changes an answer.
+    previous_submission_id: str | None = None                # the submission this one corrects
+    answer_changes: list = field(default_factory=list)       # [{question_id, text, from, to}]
+    superseded_by: str | None = None                         # set on the original once corrected
 
     def to_dict(self) -> dict:
         return asdict(self)

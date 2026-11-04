@@ -19,6 +19,8 @@ export default function App() {
   const [role, setRole] = useState<Role | null>(null);
   const [profile, setProfile] = useState<Profile>(() => storage.get("oci.profile", EMPTY_PROFILE));
   const [pending, setPending] = useState<Record<string, Answer> | null>(null);
+  // An answer correction in flight: re-scores via the engine, then returns to results.
+  const [correction, setCorrection] = useState<{ run: () => Promise<SubmissionResult>; from: SubmissionResult } | null>(null);
   const [result, setResult] = useState<SubmissionResult | null>(null);
   const [config, setConfig] = useState<ApiConfig | null>(null);
   const [questionChats, setQuestionChats] = useState<QuestionChats>(() =>
@@ -126,12 +128,33 @@ export default function App() {
             }}
             onBack={() => setStep("profile")}
             onSubmit={(answers) => {
+              setCorrection(null);
               setPending(answers);
               setStep("processing");
             }}
           />
         )}
-        {step === "processing" && pending && (
+        {step === "processing" && correction && (
+          <Processing
+            key={`correction-${correction.from.submission_id}`}
+            profile={correction.from.profile}
+            answers={{}}
+            run={correction.run}
+            errorLabel="Back to my results"
+            onDone={(r) => {
+              setCorrection(null);
+              setResult(r);
+              storage.set("oci.lastResult", r.submission_id);
+              setStep("results");
+            }}
+            onError={() => {
+              setResult(correction.from);
+              setCorrection(null);
+              setStep("results");
+            }}
+          />
+        )}
+        {step === "processing" && !correction && pending && (
           <Processing
             profile={profile}
             answers={pending}
@@ -143,7 +166,14 @@ export default function App() {
             onError={() => setStep("questionnaire")}
           />
         )}
-        {step === "results" && result && <Results result={result} onResultChange={setResult} onStartOver={startOver} />}
+        {step === "results" && result && (
+          <Results result={result} onResultChange={setResult} onStartOver={startOver}
+            onChangeAnswer={(questionId, to) => {
+              const from = result;
+              setCorrection({ run: () => api.changeAnswers(from.submission_id, { [questionId]: to }), from });
+              setStep("processing");
+            }} />
+        )}
         {step === "staff" && <StaffAnalytics />}
       </main>
 

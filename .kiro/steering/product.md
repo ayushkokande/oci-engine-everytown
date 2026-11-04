@@ -35,6 +35,11 @@ downloadable PDF report. Built for the AWS Breaking Barriers hackathon; handed o
   never name another organization; no organization's results are shown to another.
 - An organization can **add context and regenerate its feedback**: narrative only, never answers,
   scores, stages, gaps or bands. Earlier narrative versions are kept.
+- An organization can **correct its own answers** ("Change my answer" on a recommendation). The
+  person confirms the change; the unchanged engine re-scores the corrected answer set as a NEW
+  submission linked to the original (`previous_submission_id`, `answer_changes`); the original is kept,
+  marked `superseded_by`, and dropped from staff lists and network figures. The AI and the chats can
+  never change an answer; they only point the person to this control.
 - **Synthetic data only, no PII.** Sandbox AWS account only; never Everytown's account.
 - No Everytown-confidential material in the repo (it is open source).
 - **Organization research reads only the org's own website** (homepage-style, AWS only). No web

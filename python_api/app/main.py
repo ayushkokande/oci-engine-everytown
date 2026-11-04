@@ -11,6 +11,7 @@ lose them.
 from __future__ import annotations
 
 import copy
+import json
 import logging
 import threading
 from collections import OrderedDict
@@ -54,6 +55,14 @@ class Profile(BaseModel):
 class SubmitRequest(BaseModel):
     profile: Profile
     answers: dict[str, str] = Field(default_factory=dict)
+
+
+class ChangeAnswersRequest(BaseModel):
+    """Answers the organization itself chose to change, keyed by question id."""
+    changes: dict[str, Literal["yes", "no"]] = Field(min_length=1, max_length=10)
+
+
+MAX_ANSWER_CHANGES = 10
 
 
 class QuestionChatMessage(BaseModel):
@@ -111,7 +120,9 @@ def _clip_reply(reply: str) -> str:
 def public_view(data: dict) -> dict:
     """A stored record as the API returns it: no raw answers, plus the shared stage profile."""
     data = dict(data)
-    data.pop("answers", None)
+    answers = data.pop("answers", None) or {}
+    # Each gap carries the organization's own answer so the UI can offer to change it.
+    data["gaps"] = [dict(g, answer=answers.get(g["question_id"])) for g in data.get("gaps", [])]
     data["stage_profile"] = stage_profile(data.get("scores", {}), data.get("gaps", []))
     data["stage_rule"] = STAGE_EXPLAINER
     return data
@@ -224,7 +235,8 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
                                  max_tokens=settings.bedrock_max_tokens,
                                  fetch_timeout=settings.research_fetch_timeout_s,
                                  skip_fetch=settings.llm_mode == "mock",
-                                 research_override=org["description"] if org else None)
+                                 research_override=org["description"] if org else None,
+                                 org_context=[c["text"] for c in record.org_context] or None)
         except Exception as e:  # never let orchestration take the scores down with it
             log.exception("orchestration crashed")
             from .orchestrator import OrchestrationResult
@@ -321,6 +333,11 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
                 "error": "incomplete_submission", "missing_count": len(missing), "missing_ids": missing})
 
         answers = normalise_answers(req.answers, settings.in_scope_domains)
+        return _score_and_respond(profile, answers, background)
+
+    def _score_and_respond(profile: dict, answers: dict, background: BackgroundTasks, **extra):
+        """Score with the unchanged engine, then narrate and save; shared by new submissions
+        and answer corrections. ``extra`` sets correction fields on the new record."""
         all_recs, _summaries, display = score_submission(answers, settings.in_scope_domains)
         gaps = gaps_from_recs(all_recs)
         now = datetime.now(timezone.utc).replace(microsecond=0)
@@ -329,7 +346,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             timestamp=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             profile=profile, category=profile["category"],
             in_scope_domains=list(settings.in_scope_domains),
-            answers=answers, scores=display, gaps=gaps)
+            answers=answers, scores=display, gaps=gaps, **extra)
 
         if settings.async_orchestration:
             # Save the scores now and answer at once (status "pending"); the narrative is
@@ -364,6 +381,42 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     @app.get("/api/submissions/{submission_id}")
     def get_submission(submission_id: str):
         return public_view(_load(submission_id))
+
+    @app.post("/api/submissions/{submission_id}/change-answers")
+    def change_answers(submission_id: str, req: ChangeAnswersRequest, background: BackgroundTasks):
+        """The organization corrects some of its own answers. The engine re-scores the full,
+        corrected answer set as a new submission; the original is kept and marked superseded.
+        Added context carries over so the new narrative still uses it."""
+        data = _load(submission_id)
+        if data.get("superseded_by"):
+            return JSONResponse(status_code=409, content={
+                "error": "already_corrected", "superseded_by": data["superseded_by"]})
+        answers = dict(data.get("answers") or {})
+        in_scope = set(data.get("in_scope_domains") or settings.in_scope_domains)
+        index = {q["id"]: q for d in questionnaire["domains"] if d["id"] in in_scope for q in d["questions"]}
+        changes = []
+        for qid, new in req.changes.items():
+            if qid not in index:
+                raise HTTPException(422, "unknown or out-of-scope question id: %s" % qid)
+            old = answers.get(qid)
+            if old == new:
+                raise HTTPException(422, "%s is already answered '%s'" % (qid, new))
+            changes.append({"question_id": qid, "text": index[qid]["text"], "from": old, "to": new})
+            answers[qid] = new
+        if missing_answers(answers, settings.in_scope_domains):
+            raise HTTPException(409, "the original submission doesn't cover the current questionnaire; "
+                                     "start a new assessment instead")
+        answers = normalise_answers(answers, settings.in_scope_domains)
+        response = _score_and_respond(
+            dict(data["profile"]), answers, background,
+            previous_submission_id=submission_id, answer_changes=changes,
+            org_context=list(data.get("org_context") or []))
+        new_id = (json.loads(response.body)["submission_id"] if isinstance(response, JSONResponse)
+                  else response["submission_id"])
+        original = SubmissionRecord.from_dict(data)
+        original.superseded_by = new_id
+        _save(original)
+        return response
 
     @app.post("/api/submissions/{submission_id}/feedback-chat")
     def submission_feedback_chat(submission_id: str, req: AssessmentChatRequest):
@@ -439,7 +492,8 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
         with recent_lock:  # this process's copy is never older than the stored one
             for sid, data in recent.items():
                 by_id[sid] = SubmissionRecord.from_dict(copy.deepcopy(data))
-        return list(by_id.values())
+        # A corrected assessment is replaced by its correction in lists and network figures.
+        return [r for r in by_id.values() if not r.superseded_by and not is_retired_seed(r)]
 
     def _network_for(data: dict) -> tuple[dict, list[dict]]:
         network = network_summary(_all_records())

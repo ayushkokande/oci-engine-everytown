@@ -82,4 +82,5 @@ def aggregate(records: list[SubmissionRecord], date_from=None, date_to=None, cat
 
 def load_for_analytics(store, date_from=None, date_to=None) -> list[SubmissionRecord]:
     from .seed import is_retired_seed
-    return [r for r in store.list_records(month_prefixes(date_from, date_to)) if not is_retired_seed(r)]
+    return [r for r in store.list_records(month_prefixes(date_from, date_to))
+            if not is_retired_seed(r) and not r.superseded_by]

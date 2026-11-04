@@ -35,11 +35,14 @@ async function waitForNarrative(first: SubmissionResult): Promise<SubmissionResu
  * The indicators are time-sequenced here; the move to results is gated on the
  * real (final) response.
  */
-export function Processing({ profile, answers, onDone, onError }: {
+export function Processing({ profile, answers, run, onDone, onError, errorLabel }: {
   profile: Profile;
   answers: Record<string, Answer>;
+  /** Overrides the default submit, e.g. to re-score corrected answers. */
+  run?: () => Promise<SubmissionResult>;
   onDone: (r: SubmissionResult) => void;
   onError: () => void;
+  errorLabel?: string;
 }) {
   const [active, setActive] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export function Processing({ profile, answers, onDone, onError }: {
   useEffect(() => {
     if (started.current === attempt) return;  // StrictMode runs effects twice in dev
     started.current = attempt;
-    api.submit(profile, answers)
+    (run ? run() : api.submit(profile, answers))
       .then((r) => (r.orchestration_status === "pending" ? waitForNarrative(r) : r))
       .then(setResponse)
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message
@@ -104,7 +107,7 @@ export function Processing({ profile, answers, onDone, onError }: {
           <span>{error}</span>
           <span className="proc-error-actions">
             <button className="btn primary small" onClick={retry}>Try again</button>
-            <button className="linklike" onClick={onError}>Back to the questionnaire</button>
+            <button className="linklike" onClick={onError}>{errorLabel ?? "Back to the questionnaire"}</button>
           </span>
         </div>
       )}
