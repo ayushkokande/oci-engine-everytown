@@ -1,9 +1,15 @@
-"""PdfRenderer: plain text rendered to a PDF.
+"""PdfRenderer: the detailed report, as plain text lines rendered to a PDF.
 
-The report is built as a list of plain-text lines first (``report_lines``),
-then written to PDF with fpdf2's core Helvetica font. Order:
-header -> disclaimer -> capacity summary -> research -> action plan ->
-recommendations grouped High, then Medium, then Low.
+The results screen stays short; this report carries the detailed analysis. It is
+built as a list of (style, text) lines first (``report_lines``), then written to
+PDF with fpdf2's core Helvetica font. Order:
+
+    header -> how to read it -> at a glance -> where to start -> action plan ->
+    area-by-area analysis (stage profile, what holds each area at its stage) ->
+    context the organization added -> website summary ->
+    every recommendation, grouped High, then Medium, then Low -> resources
+
+Every number comes from the stored engine output; the narrative is the model's.
 """
 from __future__ import annotations
 
@@ -12,6 +18,7 @@ from datetime import datetime
 from fpdf import FPDF
 
 from .scoring_adapter import BAND_ORDER
+from .stage_profile import STAGE_EXPLAINER, stage_profile, stage_summary_line
 
 DISCLAIMER = (
     "This report is a self-assessment snapshot based on your organization's own answers. "
@@ -43,39 +50,63 @@ def ordered_recommendations(record: dict) -> list[dict]:
     return sorted(recs, key=lambda r: (BAND_ORDER.get(r.get("priority"), 9), -float(r.get("priority_score", 0))))
 
 
-def report_lines(record: dict) -> list[tuple[str, str]]:
-    """(style, text) pairs. Styles: h1, h2, h3, body, small, bullet, rule."""
+def report_lines(record: dict, resources: list | None = None) -> list[tuple[str, str]]:
+    """(style, text) pairs. Styles: h1, h2, h3, body, body_bold, small, bullet, meter, rule.
+
+    ``meter`` text is "label|percent". Earlier sections refer to practices as
+    "text (ID)"; only the full recommendations section uses "[ID] text".
+    """
     profile = record.get("profile", {})
     scores = record.get("scores", {})
     stats = scores.get("overall_stats", {})
     domains = scores.get("domains", [])
     names = [d["domain_name"] for d in domains] or record.get("in_scope_domains", [])
+    stages = {p["domain_id"]: p for p in stage_profile(scores, record.get("gaps", []))}
+    analysis = record.get("domain_analysis") or {}
+    recs = ordered_recommendations(record)
+    rec_by_id = {r["question_id"]: r for r in recs}
+    res_by_id = {r.id: r for r in (resources or [])}
     try:
         date = datetime.fromisoformat(record["timestamp"].replace("Z", "+00:00")).strftime("%B %d, %Y")
     except Exception:
         date = record.get("timestamp", "")
 
     out: list[tuple[str, str]] = [
-        ("h1", "Organizational Capacity Index - Recommendations Report"),
+        ("h1", "Organizational Capacity Index - Detailed Report"),
         ("body", "Organization: %s" % profile.get("org_name", "")),
         ("body", "Website: %s" % (profile.get("website_url") or "not provided")),
-        ("body", "Report date: %s" % date),
-        ("body", "Domains assessed: %s" % ", ".join(names)),
-        ("rule", ""),
-        ("small", DISCLAIMER),
-        ("h2", "Capacity summary"),
+        ("body", "Assessment date: %s" % date),
+        ("body", "Areas assessed: %s" % ", ".join(names)),
+    ]
+    if record.get("revision_count"):
+        out.append(("small", "This version of the feedback was updated %d time%s with context your "
+                    "organization added after reading the first report. Scores and priorities are unchanged."
+                    % (record["revision_count"], "" if record["revision_count"] == 1 else "s")))
+    out += [("rule", ""), ("h2", "How to read this report"), ("small", DISCLAIMER), ("small", STAGE_EXPLAINER)]
+
+    out += [
+        ("h2", "At a glance"),
         ("body", "%d statements answered, %d capacity gaps identified (%d High, %d Medium, %d Low priority)."
          % (stats.get("total_questions", 0), stats.get("total_gaps", 0), stats.get("high_priority", 0),
             stats.get("medium_priority", 0), stats.get("low_priority", 0))),
     ]
     for d in domains:
-        out.append(("bullet", "%s: %.1f%% capacity, estimated stage %s (%d of %d statements are gaps)"
-                    % (d["domain_name"], d["score_pct"], d["estimated_stage"], d["gap_count"], d["total_questions"])))
-
+        out.append(("meter", "%s - %s stage, %d of %d to build on|%s" % (
+            d["domain_name"], d["estimated_stage"], d["gap_count"], d["total_questions"], d["score_pct"])))
     if record.get("overview"):
-        out += [("h2", "Overview"), ("body", record["overview"])]
-    if record.get("research_summary"):
-        out += [("h2", "About your organization (from your website)"), ("body", record["research_summary"])]
+        out += [("h3", "Overview"), ("body", record["overview"])]
+    if record.get("orchestration_status") == "error":
+        out += [("h3", "Note"), ("small", "Personalized narrative could not be generated for this report. "
+                                          "The recommendations below use the questionnaire's standard next steps.")]
+
+    start = [r for r in recs if r.get("priority") == "High"][:5]
+    if start:
+        out.append(("h2", "Where to start"))
+        out.append(("small", "The five highest-priority practices for your organization. Details for each are "
+                             "in the recommendations section."))
+        for r in start:
+            out.append(("bullet", "%s (%s, %s)" % (r["text"], r["question_id"], r.get("domain_name", ""))))
+
     if record.get("action_plan"):
         out.append(("h2", "Suggested action plan"))
         for phase in record["action_plan"]:
@@ -83,13 +114,44 @@ def report_lines(record: dict) -> list[tuple[str, str]]:
             for a in phase.get("actions", []):
                 refs = " (%s)" % ", ".join(a["question_ids"]) if a.get("question_ids") else ""
                 out.append(("bullet", a.get("text", "") + refs))
-    if record.get("orchestration_status") == "error":
-        out += [("h2", "Note"), ("small", "Personalized narrative could not be generated for this report. "
-                                          "The recommendations below use the questionnaire's standard next steps.")]
+
+    out.append(("h2", "Area-by-area analysis"))
+    for d in domains:
+        p = stages.get(d["domain_id"])
+        out.append(("h3", "%s: %.1f%% capacity, %s stage" % (d["domain_name"], d["score_pct"], d["estimated_stage"])))
+        if analysis.get(d["domain_id"]):
+            out.append(("body", analysis[d["domain_id"]]))
+        if p:
+            out.append(("body", stage_summary_line(p)))
+            out.append(("small", "Practices in place by stage: " + "; ".join(
+                "%s %d of %d" % (s["name"], s["in_place"], s["total"]) for s in p["stages"] if s["total"])))
+            if p["blocking_gap_ids"]:
+                out.append(("body_bold", "To reach the next stage"))
+                for qid in p["blocking_gap_ids"]:
+                    r = rec_by_id.get(qid)
+                    if r:
+                        out.append(("bullet", "%s (%s, %s priority)" % (r["text"], qid, r.get("priority", ""))))
+        bands = [r.get("priority") for r in recs if r.get("domain_id") == d["domain_id"]]
+        if bands:
+            out.append(("small", "Gaps in this area: %d High, %d Medium, %d Low priority." % (
+                bands.count("High"), bands.count("Medium"), bands.count("Low"))))
+
+    contexts = record.get("org_context") or []
+    if contexts:
+        out.append(("h2", "Context you added"))
+        out.append(("small", "In your own words, after reading the first report. The recommendations take "
+                             "this into account; it does not change your answers or scores."))
+        for c in contexts:
+            out.append(("bullet", c.get("text", "")))
+
+    if record.get("research_summary"):
+        out += [("h2", "About your organization (from your website)"), ("body", record["research_summary"])]
 
     out.append(("h2", "Recommendations, ordered by priority band"))
+    out.append(("small", "Every gap from your assessment, with what to do and why."))
     current = None
-    for r in ordered_recommendations(record):
+    used: list[str] = []
+    for r in recs:
         if r.get("priority") != current:
             current = r.get("priority")
             out.append(("h3", "%s priority" % current))
@@ -100,29 +162,53 @@ def report_lines(record: dict) -> list[tuple[str, str]]:
         for s in r.get("next_steps", []):
             out.append(("bullet", s))
         if r.get("resource_ids"):
-            out.append(("small", "Resources: %s" % ", ".join(r["resource_ids"])))
+            out.append(("small", "Resources: %s" % ", ".join(
+                "%s (%s)" % (res_by_id[i].title, i) if i in res_by_id else i for i in r["resource_ids"])))
+            used += [i for i in r["resource_ids"] if i not in used]
+
+    if used:
+        out.append(("h2", "Resources referenced"))
+        for i in used:
+            res = res_by_id.get(i)
+            out.append(("bullet", "%s - %s%s" % (i, res.title, (". Source: %s" % res.source) if res.source else "")
+                        if res else i))
     return out
 
 
-def render_pdf(record: dict) -> bytes:
+def render_pdf(record: dict, resources: list | None = None) -> bytes:
     pdf = FPDF(format="Letter")
     pdf.set_auto_page_break(auto=True, margin=18)
     pdf.set_margins(18, 18, 18)
     pdf.add_page()
-    pdf.set_title(latin1("OCI Recommendations - %s" % record.get("profile", {}).get("org_name", "")))
+    pdf.set_title(latin1("OCI Report - %s" % record.get("profile", {}).get("org_name", "")))
     styles = {
-        "h1": ("B", 16, 8, 4), "h2": ("B", 13, 7, 5), "h3": ("B", 11, 6, 3),
+        "h1": ("B", 16, 8, 4), "h2": ("B", 13, 7, 6), "h3": ("B", 11, 6, 3),
         "body": ("", 10, 5, 1), "body_bold": ("B", 10, 5, 2), "small": ("I", 9, 4.5, 1),
         "bullet": ("", 10, 5, 0),
     }
     width = pdf.w - pdf.l_margin - pdf.r_margin
-    for style, text in report_lines(record):
+    for style, text in report_lines(record, resources):
         if style == "rule":
             pdf.ln(2)
             pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
             pdf.ln(3)
             continue
+        if style == "meter":
+            label, _, pct = text.rpartition("|")
+            value = max(0.0, min(100.0, float(pct or 0)))
+            pdf.ln(2)
+            pdf.set_font("Helvetica", "", 10)
+            pdf.multi_cell(width, 5, latin1("%s: %.1f%%" % (label, value)), new_x="LMARGIN", new_y="NEXT")
+            y = pdf.get_y() + 0.5
+            pdf.set_fill_color(228, 228, 222)
+            pdf.rect(pdf.l_margin, y, width, 2.6, style="F")
+            pdf.set_fill_color(40, 40, 38)
+            pdf.rect(pdf.l_margin, y, width * value / 100.0, 2.6, style="F")
+            pdf.ln(4)
+            continue
         font, size, height, space = styles.get(style, styles["body"])
+        if style in ("h2", "h3", "body_bold") and pdf.get_y() > pdf.page_break_trigger - 30:
+            pdf.add_page()  # keep a heading with the text that follows it
         pdf.ln(space)
         pdf.set_font("Helvetica", font, size)
         if style == "bullet":

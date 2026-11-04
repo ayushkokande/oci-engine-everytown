@@ -113,12 +113,25 @@ class MockClaude:
                     "following practice is currently in place: \"%s\" Think about a concrete routine, "
                     "example, or record that shows what happens today. This explanation does not choose "
                     "Yes or No for you." % statement)
+        if kind == "feedback_chat":
+            return ("[Offline mock - no model was called] Thanks, that helps. Your scores stay as "
+                    "submitted, but when you press 'Update my feedback' the recommendations will take "
+                    "what you said into account: \"%s\" What else about your team or constraints "
+                    "should the feedback reflect?" % ctx.get("last", "")[:200])
+        if kind == "staff_chat":
+            return ("[Offline mock - no model was called] For %s, start the coaching conversation with "
+                    "the gaps that hold each area at its stage (see the Stage insights), then the "
+                    "High-priority items in its action plan. You asked: \"%s\""
+                    % (ctx.get("org_name") or "this organization", ctx.get("last", "")[:200]))
         if kind == "research":
             return ("[Offline mock - no model was called] %s (%s). Set OCI_LLM_MODE=bedrock to "
                     "have Claude on Amazon Bedrock summarise the organization's public website."
                     % (ctx.get("org_name", "This organization"), ctx.get("website_url", "no URL")))
         gaps = ctx.get("gaps", [])
         library_ids = ctx.get("library_ids", [])
+        org_context = ctx.get("org_context") or []
+        tailored = (" (Updated with the context you added: %s.)" % "; ".join(org_context)[:160]
+                    if org_context else "")
         recs = []
         for g in gaps:
             steps = g.get("next_steps") or []
@@ -128,7 +141,7 @@ class MockClaude:
                 "narrative": ("[Mock] First step: %s. %s" % (
                     first.rstrip("."),
                     "Then work through the remaining next steps over the coming months."
-                    if len(steps) > 1 else "")).strip(),
+                    if len(steps) > 1 else "")).strip() + tailored,
                 "resource_ids": [r for r in library_ids if r in g.get("suggested_resources", [])][:2],
             })
         top = [g["question_id"] for g in gaps]
@@ -142,7 +155,10 @@ class MockClaude:
         ]
         return json.dumps({
             "overview": "[Offline mock - no model was called] This narrative is placeholder text "
-                        "built from the questionnaire's own next steps.",
+                        "built from the questionnaire's own next steps." + tailored,
+            "domain_analysis": [{"domain_id": d, "analysis": "[Mock] Analysis for %s: start with the "
+                                 "practices that hold this area at its current stage." % d}
+                                for d in ctx.get("domain_ids", [])],
             "action_plan": plan,
             "recommendations": recs,
         })

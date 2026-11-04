@@ -16,7 +16,10 @@ python_api/
   app/llm.py             BedrockClaude (Converse, throttle, retry) and MockClaude (offline)
   app/pdf_report.py      plain text -> PDF, ordered High -> Medium -> Low
   app/store.py           SubmissionRecord, Local/S3 stores, key scheme
-  app/analytics.py       aggregate-only staff analytics
+  app/analytics.py       network aggregates for staff analytics
+  app/stage_profile.py   shared stage profile (results, PDF, staff) explaining the engine's stage
+  app/insights.py        code-computed per-assessment insights for staff, linked by question id
+  app/assistant_chat.py  feedback-refinement chat (org) and per-assessment chat (staff)
   app/seed.py            synthetic seed submissions (benchmark A/B/C + variants)
   app/resources.py       Resource_Library loader
   resource_library/      R1–R6 placeholder resources (*.md with front matter)
@@ -24,6 +27,7 @@ python_api/
 frontend/src/
   App.tsx                step machine: login | profile | questionnaire | processing | results | staff
   components/Login.tsx ProfileForm.tsx Questionnaire.tsx Processing.tsx Results.tsx StaffAnalytics.tsx
+  components/StaffAssessment.tsx AssessmentChat.tsx StageProfileView.tsx QuestionChatDialog.tsx
   api.ts types.ts config.ts (mocked creds + safe localStorage) styles.css
 infra/oci-stack.yaml     S3 bucket (Block Public Access) + least-privilege IAM role; infra/README.md
 tests/                   test_scoring_path.py, test_orchestration.py, test_report_store_analytics.py

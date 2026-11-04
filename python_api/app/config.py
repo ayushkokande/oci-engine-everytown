@@ -35,6 +35,8 @@ class Settings:
     bedrock_max_tokens: int = 16000
     # A short, separate budget for one question-explanation chat response.
     question_chat_max_tokens: int = 500
+    # Budget for one reply in the feedback-refinement and staff assessment chats.
+    assessment_chat_max_tokens: int = 900
     # "local" writes JSON files under local_store_dir using the same key scheme
     # as S3; "s3" writes to the submissions bucket.
     store_backend: str = "local"
@@ -59,6 +61,7 @@ def load_settings() -> Settings:
         bedrock_model_id=env.get("OCI_BEDROCK_MODEL_ID", DEFAULT_MODEL_ID),
         bedrock_max_tokens=int(env.get("OCI_BEDROCK_MAX_TOKENS", "16000")),
         question_chat_max_tokens=int(env.get("OCI_BEDROCK_CHAT_MAX_TOKENS", "500")),
+        assessment_chat_max_tokens=int(env.get("OCI_BEDROCK_ASSESSMENT_CHAT_MAX_TOKENS", "900")),
         store_backend=env.get("OCI_STORE", "local").lower(),
         local_store_dir=Path(env.get("OCI_LOCAL_STORE_DIR", str(API_ROOT / ".data"))),
         s3_bucket=env.get("OCI_S3_BUCKET") or None,

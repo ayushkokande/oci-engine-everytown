@@ -24,8 +24,10 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from .analytics import aggregate, load_for_analytics
+from .analytics import aggregate, filter_records, load_for_analytics
+from .assistant_chat import feedback_chat, staff_chat
 from .config import Settings, load_settings
+from .insights import assessment_insights, network_summary
 from .llm import LLMClient, ModelError, build_llm
 from .orchestrator import merge_recommendations, orchestrate
 from .pdf_report import render_pdf
@@ -34,6 +36,7 @@ from .questions import missing_answers, normalise_answers, questions_payload, va
 from .resources import load_library
 from .scoring_adapter import gaps_from_recs, score_submission
 from .seed import SAMPLES, benchmark_answers, seed_if_empty
+from .stage_profile import STAGE_EXPLAINER, stage_profile
 from .store import SubmissionRecord, SubmissionStore, build_store, new_submission_id
 
 log = logging.getLogger("oci")
@@ -65,6 +68,54 @@ class QuestionChatRequest(BaseModel):
     messages: list[QuestionChatMessage] = Field(min_length=1, max_length=11)
 
 
+class AssessmentChatRequest(BaseModel):
+    """Feedback-refinement and staff chats: longer than the per-question chat."""
+    model_config = ConfigDict(extra="forbid")
+
+    messages: list[QuestionChatMessage] = Field(min_length=1, max_length=21)
+
+
+class ReviseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    # The organization's own words. Empty = re-run with the context already saved (a retry).
+    context: str = Field(default="", max_length=3000)
+
+
+MAX_CONTEXT_ENTRIES = 20
+MAX_KEPT_REVISIONS = 5
+
+
+def check_transcript(messages: list[dict], *, max_user_chars: int, max_total_chars: int) -> None:
+    """Shared rules for every chat: alternate roles, start and end with the user, bounded size."""
+    for index, message in enumerate(messages):
+        expected_role = "user" if index % 2 == 0 else "assistant"
+        if message["role"] != expected_role:
+            raise HTTPException(422, "chat messages must alternate user and assistant roles")
+        if message["role"] == "user" and len(message["content"]) > max_user_chars:
+            raise HTTPException(422, "user messages must be %d characters or fewer" % max_user_chars)
+    if messages[-1]["role"] != "user":
+        raise HTTPException(422, "the final chat message must be from the user")
+    if sum(len(message["content"]) for message in messages) > max_total_chars:
+        raise HTTPException(422, "chat history is too long")
+
+
+def _clip_reply(reply: str) -> str:
+    reply = reply.strip()
+    if not reply:
+        raise HTTPException(502, "The model returned an empty reply. Please try again.")
+    return reply if len(reply) <= 6000 else reply[:5997].rstrip() + "..."
+
+
+def public_view(data: dict) -> dict:
+    """A stored record as the API returns it: no raw answers, plus the shared stage profile."""
+    data = dict(data)
+    data.pop("answers", None)
+    data["stage_profile"] = stage_profile(data.get("scores", {}), data.get("gaps", []))
+    data["stage_rule"] = STAGE_EXPLAINER
+    return data
+
+
 def create_app(settings: Settings | None = None, store: SubmissionStore | None = None,
                llm: LLMClient | None = None) -> FastAPI:
     settings = settings or load_settings()
@@ -84,6 +135,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     }
     recent: "OrderedDict[str, dict]" = OrderedDict()  # last results, in case a store write fails
     recent_lock = threading.Lock()  # background narration threads write to `recent`
+    revising: set[str] = set()  # submission ids with a revision in flight in this process
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -122,16 +174,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             raise HTTPException(404, "unknown or out-of-scope question")
 
         messages = [message.model_dump() for message in req.messages]
-        for index, message in enumerate(messages):
-            expected_role = "user" if index % 2 == 0 else "assistant"
-            if message["role"] != expected_role:
-                raise HTTPException(422, "chat messages must alternate user and assistant roles")
-            if message["role"] == "user" and len(message["content"]) > 1000:
-                raise HTTPException(422, "user messages must be 1000 characters or fewer")
-        if messages[-1]["role"] != "user":
-            raise HTTPException(422, "the final chat message must be from the user")
-        if sum(len(message["content"]) for message in messages) > 12000:
-            raise HTTPException(422, "chat history is too long")
+        check_transcript(messages, max_user_chars=1000, max_total_chars=12000)
 
         try:
             reply = explain_question(
@@ -183,6 +226,43 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
         record.orchestration_error = result.error
         record.recommendations = (merge_recommendations(gaps, result.narratives)
                                   if result.status == "ok" else [])
+        record.domain_analysis = result.domain_analysis if result.status == "ok" else {}
+
+    def _revise(record: SubmissionRecord) -> None:
+        """Regenerate the narrative with the organization's added context.
+
+        Scores, stages, gaps and bands are read from the record and never written. On
+        failure the previous narrative stays in place and the snapshot taken for it is dropped.
+        """
+        try:
+            result = orchestrate(llm, record.profile, record.scores, record.gaps, library,
+                                 max_tokens=settings.bedrock_max_tokens,
+                                 org_context=[c["text"] for c in record.org_context],
+                                 reuse_research=True, research=record.research_summary)
+        except Exception as e:
+            log.exception("revision crashed")
+            from .orchestrator import OrchestrationResult
+            result = OrchestrationResult(status="error", error="revision_failed:%s" % type(e).__name__)
+        if result.status != "ok":
+            record.revision_status, record.revision_error = "error", result.error
+            if record.revisions:
+                record.revisions.pop()
+            return
+        record.overview = result.overview
+        record.action_plan = result.action_plan
+        record.recommendations = merge_recommendations(record.gaps, result.narratives)
+        record.domain_analysis = result.domain_analysis
+        record.orchestration_status, record.orchestration_error = "ok", None
+        record.revision_status, record.revision_error = "ok", None
+        record.revision_count += 1
+
+    def _revise_and_save(record: SubmissionRecord) -> None:
+        try:
+            _revise(record)
+            _save(record)
+        finally:
+            with recent_lock:
+                revising.discard(record.submission_id)
 
     def _save(record: SubmissionRecord) -> bool:
         """Persist the record and keep an in-memory copy in case the store write fails."""
@@ -234,15 +314,13 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             # added in the background and the client polls GET /api/submissions/{id}.
             persisted = _save(record)
             background.add_task(_narrate_and_save, record, profile, display, gaps)
-            body = record.to_dict()
-            body.pop("answers", None)
+            body = public_view(record.to_dict())
             body["persisted"] = persisted
             return JSONResponse(status_code=202, content=body)
 
         _narrate(record, profile, display, gaps)
         persisted = _save(record)
-        body = record.to_dict()
-        body.pop("answers", None)
+        body = public_view(record.to_dict())
         body["persisted"] = persisted
         return body
 
@@ -263,17 +341,139 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
 
     @app.get("/api/submissions/{submission_id}")
     def get_submission(submission_id: str):
+        return public_view(_load(submission_id))
+
+    @app.post("/api/submissions/{submission_id}/feedback-chat")
+    def submission_feedback_chat(submission_id: str, req: AssessmentChatRequest):
+        """The organization asks about its feedback and adds context in its own words."""
         data = _load(submission_id)
-        data.pop("answers", None)
-        return data
+        messages = [m.model_dump() for m in req.messages]
+        check_transcript(messages, max_user_chars=1500, max_total_chars=20000)
+        try:
+            reply = feedback_chat(llm, data, messages, max_tokens=settings.assessment_chat_max_tokens)
+        except ModelError as error:
+            log.warning("feedback chat model failure for %s: %s", submission_id, error.code)
+            raise HTTPException(503, "The feedback assistant is temporarily unavailable. Please try again.")
+        return {"submission_id": submission_id, "reply": _clip_reply(reply)}
+
+    @app.post("/api/submissions/{submission_id}/revise")
+    def revise_submission(submission_id: str, req: ReviseRequest, background: BackgroundTasks):
+        """Regenerate the narrative with the organization's added context. Scores never change."""
+        record = SubmissionRecord.from_dict(_load(submission_id))
+        if record.orchestration_status == "pending":
+            raise HTTPException(409, "The first report is still being prepared. Try again in a minute.")
+        with recent_lock:
+            if submission_id in revising:
+                raise HTTPException(409, "An update is already in progress.")
+            revising.add(submission_id)
+        try:
+            if req.context:
+                if len(record.org_context) >= MAX_CONTEXT_ENTRIES:
+                    raise HTTPException(422, "This report already has the maximum amount of added context.")
+                stamp = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+                record.org_context.append({"text": req.context, "timestamp": stamp})
+            elif not record.org_context:
+                raise HTTPException(422, "Add some context before updating your feedback.")
+            if record.orchestration_status == "ok":
+                record.revisions.append({
+                    "revision": record.revision_count, "overview": record.overview,
+                    "action_plan": record.action_plan, "recommendations": record.recommendations,
+                    "domain_analysis": record.domain_analysis,
+                    "context_entries": len(record.org_context) - (1 if req.context else 0)})
+                record.revisions = record.revisions[-MAX_KEPT_REVISIONS:]
+            record.revision_status, record.revision_error = "pending", None
+        except HTTPException:
+            with recent_lock:
+                revising.discard(submission_id)
+            raise
+
+        if settings.async_orchestration:
+            persisted = _save(record)
+            background.add_task(_revise_and_save, record)
+            body = public_view(record.to_dict())
+            body["persisted"] = persisted
+            return JSONResponse(status_code=202, content=body)
+
+        _revise_and_save(record)
+        with recent_lock:
+            body = public_view(copy.deepcopy(recent[submission_id]))
+        return body
 
     @app.get("/api/report/{submission_id}")
-    def report(submission_id: str):
+    def report(submission_id: str, inline: bool = False):
         data = _load(submission_id)
-        pdf = render_pdf(data)
+        pdf = render_pdf(data, library)
         slug = submission_id.split("_")[1] if "_" in submission_id else "report"
+        disposition = "inline" if inline else "attachment"
         return Response(pdf, media_type="application/pdf", headers={
-            "Content-Disposition": 'attachment; filename="OCI_Recommendations_%s.pdf"' % slug})
+            "Content-Disposition": '%s; filename="OCI_Report_%s.pdf"' % (disposition, slug)})
+
+    # ------------------------------------------------------------------ staff: per assessment
+    # Staff-only views of individual assessments (named). Other organizations never see them.
+    # Login is mocked in the front end for the MVP; real access control is still to be decided.
+
+    def _all_records() -> list[SubmissionRecord]:
+        by_id = {r.submission_id: r for r in store.list_records()}
+        with recent_lock:  # this process's copy is never older than the stored one
+            for sid, data in recent.items():
+                by_id[sid] = SubmissionRecord.from_dict(copy.deepcopy(data))
+        return list(by_id.values())
+
+    def _network_for(data: dict) -> tuple[dict, list[dict]]:
+        network = network_summary(_all_records())
+        return network, assessment_insights(data, network)
+
+    @app.get("/api/staff/assessments")
+    def staff_assessments(date_from: str | None = Query(None, alias="from"),
+                          date_to: str | None = Query(None, alias="to"),
+                          category: str | None = None):
+        if category and category not in CATEGORIES:
+            raise HTTPException(422, "category must be one of %s" % (CATEGORIES,))
+        rows = filter_records(_all_records(), date_from, date_to, category)
+        rows.sort(key=lambda r: r.timestamp, reverse=True)
+        return {"assessments": [{
+            "submission_id": r.submission_id,
+            "timestamp": r.timestamp,
+            "org_name": r.profile.get("org_name", ""),
+            "category": r.category,
+            "synthetic": r.synthetic,
+            "orchestration_status": r.orchestration_status,
+            "overall_stats": r.scores.get("overall_stats", {}),
+            "domains": [{k: d[k] for k in ("domain_id", "domain_name", "score_pct", "estimated_stage")}
+                        for d in r.scores.get("domains", [])],
+            "context_count": len(r.org_context),
+            "revision_count": r.revision_count,
+        } for r in rows]}
+
+    @app.get("/api/staff/assessments/{submission_id}")
+    def staff_assessment(submission_id: str):
+        data = _load(submission_id)
+        network, insights = _network_for(data)
+        own_gaps = {g["question_id"] for g in data.get("gaps", [])}
+        body = public_view(data)
+        body["insights"] = insights
+        body["network"] = {
+            "assessments": network["assessments"],
+            "avg_capacity_pct": network["avg_capacity_pct"],
+            "stage_counts": network["stage_counts"],
+            "stage_profile": network["stage_profile"],
+            "gap_share_pct": {q: v for q, v in network["gap_share_pct"].items() if q in own_gaps},
+        }
+        return body
+
+    @app.post("/api/staff/assessments/{submission_id}/chat")
+    def staff_assessment_chat(submission_id: str, req: AssessmentChatRequest):
+        data = _load(submission_id)
+        messages = [m.model_dump() for m in req.messages]
+        check_transcript(messages, max_user_chars=1500, max_total_chars=20000)
+        network, insights = _network_for(data)
+        try:
+            reply = staff_chat(llm, data, messages, network, insights,
+                               max_tokens=settings.assessment_chat_max_tokens)
+        except ModelError as error:
+            log.warning("staff chat model failure for %s: %s", submission_id, error.code)
+            raise HTTPException(503, "The assessment assistant is temporarily unavailable. Please try again.")
+        return {"submission_id": submission_id, "reply": _clip_reply(reply)}
 
     @app.get("/api/analytics")
     def analytics(date_from: str | None = Query(None, alias="from"),

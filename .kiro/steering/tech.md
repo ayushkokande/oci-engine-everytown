@@ -61,4 +61,6 @@ Bedrock calls: < 1 req/s throttle, exponential backoff + jitter on throttling/tr
 ## API
 `GET /api/questions`, `POST /api/submit`, `GET /api/submissions/{id}`, `GET /api/report/{id}` (PDF),
 `GET /api/analytics?from&to&category`, `GET /api/samples/{A|B|C}` (demo answers), `GET /api/config`,
+`POST /api/submissions/{id}/feedback-chat`, `POST /api/submissions/{id}/revise` (narrative only),
+`GET /api/staff/assessments`, `GET /api/staff/assessments/{id}`, `POST /api/staff/assessments/{id}/chat`,
 `GET /api/resources`. (Design doc paths have no `/api` prefix; the prefix lets one process also serve the SPA.)

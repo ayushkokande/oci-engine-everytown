@@ -2,8 +2,10 @@
 
 A CVI organization logs in, describes itself, answers a quiz-style questionnaire (Planning,
 Fundraising, Financial Management, and Monitoring, Learning & Evaluation — 72 statements),
-and gets its capacity scores plus personalized, prioritized recommendations and a PDF report.
-CSF staff get an aggregate-only analytics view.
+and gets its capacity scores plus personalized, prioritized recommendations and a detailed PDF report.
+It can then chat about its feedback and add context (team size, what it already does) to regenerate
+the recommendations; scores never change. CSF staff get network aggregates plus a staff-only view of
+each assessment with code-computed insights linked to the organization's feedback, and a chat about it.
 
 Built from the Kiro spec in [`.kiro/specs/everytown-oci-assessment/`](.kiro/specs/everytown-oci-assessment/).
 
@@ -78,6 +80,7 @@ reject the `temperature` setting the app sends.
 | `OCI_SEED_ON_STARTUP` | `true` | Seed 9 synthetic submissions if the store is empty |
 | `OCI_BEDROCK_MAX_TOKENS` | `16000` | Output budget for the recommendation call. On Sonnet 4.6, 60 gaps needed ~9,200 tokens and 71 gaps ~10,000; 8,000 cut the JSON off. |
 | `OCI_BEDROCK_CHAT_MAX_TOKENS` | `500` | Output budget for each question-explanation chat response. |
+| `OCI_BEDROCK_ASSESSMENT_CHAT_MAX_TOKENS` | `900` | Output budget for each reply in the feedback-refinement and staff assessment chats. |
 | `OCI_ASYNC_ORCHESTRATION` | `false` | `true` = `POST /api/submit` saves the scores and returns 202 at once; the UI polls until Claude's narrative is saved. Use it behind proxies with a 30 s timeout. |
 | `VITE_ORG_USER` / `VITE_ORG_PASSWORD` / `VITE_STAFF_*` | demo creds | Mocked login (front end) |
 
@@ -104,12 +107,33 @@ throttling/transient errors with exponential backoff plus jitter.
 | `POST /api/questions/{id}/chat` | Clarify one canonical statement using a bounded, question-scoped chat |
 | `POST /api/submit` | Validate → score → research → recommend → persist |
 | `GET /api/submissions/{id}` | Stored result (no answers) |
-| `GET /api/report/{id}` | PDF, recommendations ordered High → Medium → Low |
-| `GET /api/analytics?from=&to=&category=` | Aggregate-only staff figures |
+| `POST /api/submissions/{id}/feedback-chat` | Organization asks about its feedback and adds context (grounded in its own assessment) |
+| `POST /api/submissions/{id}/revise` | `{context}`: regenerate the narrative with the organization's added context. Scores, stages, gaps and bands are never touched; earlier narrative versions are kept. 202 + polling when `OCI_ASYNC_ORCHESTRATION=true` |
+| `GET /api/report/{id}[?inline=true]` | Detailed PDF: at a glance, where to start, action plan, area-by-area analysis, added context, every recommendation High → Medium → Low, resources |
+| `GET /api/analytics?from=&to=&category=` | Network aggregates, including the average stage profile per area |
+| `GET /api/staff/assessments?from=&to=&category=` | Staff only: named list of individual assessments |
+| `GET /api/staff/assessments/{id}` | Staff only: one assessment with its feedback, stage profile, network comparison and code-computed insights |
+| `POST /api/staff/assessments/{id}/chat` | Staff only: chat about one assessment, grounded in it and network aggregates |
 | `GET /api/samples/{A,B,C}` | Demo helper: synthetic benchmark answers |
 
 The design doc specifies these paths without the `/api` prefix; the prefix lets one process serve
 both the API and the built SPA.
+
+## Stages: one definition everywhere
+
+An area's stage (from the unchanged engine) is the highest stage at which every practice, at that
+stage and all below it, is in place. One early gap can hold an area at Seeding even at 80% capacity,
+which looked contradictory next to staff analytics. `app/stage_profile.py` explains the stage instead
+of changing it: practices in place at each of the five stages, which gaps hold the area at its stage,
+and how much is already in place above it. The same profile and sentence appear on the results page,
+in the PDF, in each staff assessment view, and (averaged) in network analytics. A property test checks
+that the profile always implies exactly the engine's stage.
+
+## Access note
+
+Staff views name individual organizations (staff only; organizations never see each other). Login is
+still mocked in the front end, so the `/api/staff/*` routes have no server-side access control yet.
+Add real auth before any deployment with real organizations.
 
 ## Resource library
 

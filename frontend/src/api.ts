@@ -1,6 +1,7 @@
 import type {
-  Analytics, Answer, ApiConfig, ChatMessage, IncompleteError, Profile, QuestionChatResponse,
-  QuestionsPayload, ResourceInfo, SubmissionResult,
+  Analytics, Answer, ApiConfig, AssessmentChatResponse, ChatMessage, IncompleteError, Profile,
+  QuestionChatResponse, QuestionsPayload, ResourceInfo, StaffAssessmentDetail, StaffAssessmentRow,
+  SubmissionResult,
 } from "./types";
 
 // Relative on purpose: works at the site root and behind path-prefix proxies
@@ -18,6 +19,36 @@ async function getJson<T>(path: string): Promise<T> {
   if (!res.ok) throw new ApiError(res.status, `GET ${path} failed (${res.status})`);
   return res.json() as Promise<T>;
 }
+
+function detailOf(body: unknown): string {
+  return body && typeof (body as { detail?: unknown }).detail === "string" ? (body as { detail: string }).detail : "";
+}
+
+async function postJson<T>(path: string, payload: unknown, unreachable: string): Promise<{ status: number; body: T }> {
+  let res: Response;
+  try {
+    res = await fetch(BASE + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new ApiError(0, unreachable);
+  }
+  const body: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new ApiError(res.status, detailOf(body) || `The request failed (HTTP ${res.status}). Please try again.`, body);
+  }
+  return { status: res.status, body: body as T };
+}
+
+function query(params: Record<string, string | undefined>): string {
+  const q = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => v && q.set(k, v));
+  return q.toString() ? "?" + q : "";
+}
+
+const CHAT_UNREACHABLE = "Couldn't reach the assistant. Check that the API is running, then try again.";
 
 export const api = {
   config: () => getJson<ApiConfig>("/config"),
@@ -46,12 +77,25 @@ export const api = {
   sample: (id: string) =>
     getJson<{ sample: string; org_name: string; category: string; answers: Record<string, Answer> }>(`/samples/${id}`),
   submission: (id: string) => getJson<SubmissionResult>(`/submissions/${encodeURIComponent(id)}`),
-  analytics: (params: { from?: string; to?: string; category?: string }) => {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => v && q.set(k, v));
-    return getJson<Analytics>(`/analytics${q.toString() ? "?" + q : ""}`);
-  },
-  reportUrl: (id: string) => `${BASE}/report/${encodeURIComponent(id)}`,
+  analytics: (params: { from?: string; to?: string; category?: string }) =>
+    getJson<Analytics>(`/analytics${query(params)}`),
+  /** inline=true opens the PDF in the browser; otherwise it downloads. */
+  reportUrl: (id: string, inline = false) => `${BASE}/report/${encodeURIComponent(id)}${inline ? "?inline=true" : ""}`,
+
+  feedbackChat: (id: string, messages: ChatMessage[]) =>
+    postJson<AssessmentChatResponse>(`/submissions/${encodeURIComponent(id)}/feedback-chat`, { messages },
+      CHAT_UNREACHABLE).then((r) => r.body.reply),
+  /** Regenerate the narrative with added context. Status 202 means it is running in the background. */
+  revise: (id: string, context: string) =>
+    postJson<SubmissionResult>(`/submissions/${encodeURIComponent(id)}/revise`, { context },
+      "Couldn't reach the assessment server. Your context is still in the chat; try again."),
+
+  staffAssessments: (params: { from?: string; to?: string; category?: string }) =>
+    getJson<{ assessments: StaffAssessmentRow[] }>(`/staff/assessments${query(params)}`).then((r) => r.assessments),
+  staffAssessment: (id: string) => getJson<StaffAssessmentDetail>(`/staff/assessments/${encodeURIComponent(id)}`),
+  staffChat: (id: string, messages: ChatMessage[]) =>
+    postJson<AssessmentChatResponse>(`/staff/assessments/${encodeURIComponent(id)}/chat`, { messages },
+      CHAT_UNREACHABLE).then((r) => r.body.reply),
 
   async submit(profile: Profile, answers: Record<string, Answer>): Promise<SubmissionResult> {
     let res: Response;
