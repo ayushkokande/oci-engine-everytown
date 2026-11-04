@@ -30,7 +30,11 @@ downloadable PDF report. Built for the AWS Breaking Barriers hackathon; handed o
 - The report is **non-evaluative**: a self-assessment snapshot, not a grade or ranking.
 - **Priority bands are relative** to the gaps in one submission (percentile thirds). Always present
   them as "where to start", never as absolute severity.
-- Staff analytics are **aggregate only**: never name or compare individual organizations.
+- **Staff see individual assessments; organizations never see each other's.** CSF staff can open a
+  named, staff-only view of each assessment (decided Nov 4, 2026). Network figures stay aggregate and
+  never name another organization; no organization's results are shown to another.
+- An organization can **add context and regenerate its feedback**: narrative only, never answers,
+  scores, stages, gaps or bands. Earlier narrative versions are kept.
 - **Synthetic data only, no PII.** Sandbox AWS account only; never Everytown's account.
 - No Everytown-confidential material in the repo (it is open source).
 - **Organization research reads only the org's own website** (homepage-style, AWS only). No web
