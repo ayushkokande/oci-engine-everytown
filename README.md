@@ -53,13 +53,16 @@ Open it from the **Ports** tab (port 8000), or at `https://<workshop-host>/proxy
 ```bash
 export AWS_PROFILE=<your sandbox profile>     # credentials for the hackathon sandbox account only
 export OCI_LLM_MODE=bedrock                    # the default
-export OCI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-5-20250929-v1:0   # any enabled Claude profile in us-west-2
+export OCI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6   # any enabled Claude profile in us-west-2
+export OCI_ASYNC_ORCHESTRATION=true            # needed behind a 30 s proxy (IDE port preview, CloudFront)
 make dev-api                                   # :8000
 make dev-web                                   # :5173 (hot reload, proxies /api)
 ```
 
 Model access must be enabled once for the account in the Bedrock console (us-west-2). The default
-model id is a placeholder; use whichever Claude inference profile your sandbox has enabled.
+model id is a placeholder; use whichever Claude inference profile your sandbox has enabled. Sonnet 4.6
+has been tested end to end. The Sonnet 4.5 default is now a legacy model, and Sonnet 5.5 and Haiku 5.5
+reject the `temperature` setting the app sends.
 
 ## Configuration (environment variables)
 
@@ -73,6 +76,8 @@ model id is a placeholder; use whichever Claude inference profile your sandbox h
 | `OCI_S3_BUCKET` | – | Bucket from the stack output, when `OCI_STORE=s3` |
 | `OCI_LOCAL_STORE_DIR` | `python_api/.data` | Local store root |
 | `OCI_SEED_ON_STARTUP` | `true` | Seed 9 synthetic submissions if the store is empty |
+| `OCI_BEDROCK_MAX_TOKENS` | `16000` | Output budget for the recommendation call. On Sonnet 4.6, 60 gaps needed ~9,200 tokens and 71 gaps ~10,000; 8,000 cut the JSON off. |
+| `OCI_ASYNC_ORCHESTRATION` | `false` | `true` = `POST /api/submit` saves the scores and returns 202 at once; the UI polls until Claude's narrative is saved. Use it behind proxies with a 30 s timeout. |
 | `VITE_ORG_USER` / `VITE_ORG_PASSWORD` / `VITE_STAFF_*` | demo creds | Mocked login (front end) |
 
 ## How a submission flows
@@ -83,6 +88,11 @@ model id is a placeholder; use whichever Claude inference profile your sandbox h
 3. **Research call.** The API fetches the org's public homepage (http/https, public IPs only, 6 s timeout), and Claude summarises it with "say 'not stated', don't invent" instructions. If there's no URL or it can't be read, this step is skipped.
 4. **Recommendation call.** Claude gets the scores, every gap with its next steps, the research summary (or an explicit "no research available" note), and the whole Resource_Library, and returns JSON: overview, 30/60–90/3–6-month action plan, and one narrative per gap. Unknown question ids and resource ids are dropped; scores and bands are never taken from the model.
 5. **Persist** to `submissions/<YYYY>/<MM>/<submission_id>.json` (S3 or local). If the write fails, the response still carries the scores and `persisted: false`.
+
+With `OCI_ASYNC_ORCHESTRATION=true`, steps 1–2 run in the request and the record is saved with
+`orchestration_status: "pending"` (HTTP 202). Steps 3–5 run in the background, and the UI polls
+`GET /api/submissions/{id}` until the status changes. A live run takes 25–120 s, longer than the
+30 s request timeout of CloudFront and the IDE port preview.
 
 Bedrock calls go through the Converse API, are held under 1 request/second, and retry
 throttling/transient errors with exponential backoff plus jitter.
@@ -127,5 +137,6 @@ See [`infra/README.md`](infra/README.md).
 
 - Front-end unit tests (spec tasks 7.2, 7.4, 7.6, 7.9 are optional and not written).
 - Stretch goals: Fargate + CloudFront hosting, Bedrock Knowledge Base RAG, tone shaping.
-- Live Bedrock output has not been tested from this repo yet; run one real submission in the sandbox
-  and check the narrative quality and token use (the prompt asks for one narrative per gap, up to 72).
+- First live Bedrock run done with Sonnet 4.6 in the sandbox: 7, 32, 60 and 71 gaps took about 25, 65,
+  112 and 118 s, and every gap got a narrative once the output budget was raised to 16,000 tokens.
+  Narrative quality still needs review with CSF staff.

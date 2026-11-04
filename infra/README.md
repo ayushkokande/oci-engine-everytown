@@ -28,8 +28,8 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
       ProjectName=oci-mvp \
-      BedrockInferenceProfileId=us.anthropic.claude-sonnet-4-5-20250929-v1:0 \
-      BedrockFoundationModelId=anthropic.claude-sonnet-4-5-20250929-v1:0
+      BedrockInferenceProfileId=us.anthropic.claude-sonnet-4-6 \
+      BedrockFoundationModelId=anthropic.claude-sonnet-4-6
 
 aws cloudformation describe-stacks --region us-west-2 --stack-name oci-mvp \
   --query "Stacks[0].Outputs" --output table
@@ -38,13 +38,21 @@ aws cloudformation describe-stacks --region us-west-2 --stack-name oci-mvp \
 ## Run the API against the stack
 
 ```bash
+# Run as the stack's least-privilege role. The SDK assumes it and refreshes it automatically.
+aws configure set profile.oci-api.role_arn <ApiRoleArn output>
+aws configure set profile.oci-api.credential_source Ec2InstanceMetadata   # or Environment, or set source_profile
+aws configure set profile.oci-api.region us-west-2
+export AWS_PROFILE=oci-api
+
 export OCI_STORE=s3
 export OCI_S3_BUCKET=<SubmissionsBucketName output>
-export OCI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-5-20250929-v1:0
-# Either use your own sandbox credentials, or assume the app role:
-#   aws sts assume-role --role-arn <ApiRoleArn output> --role-session-name oci-dev
+export OCI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6   # must match the stack parameter
+export OCI_ASYNC_ORCHESTRATION=true                           # behind the IDE preview or CloudFront
 make dev-api
 ```
+
+The role can read, write and list only `submissions/` in the bucket and call only the configured
+Claude profile. It cannot delete objects, list other buckets or call other models.
 
 On first start with an empty bucket, the API seeds 9 synthetic submissions so staff analytics has data.
 

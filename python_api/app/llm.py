@@ -47,7 +47,9 @@ class BedrockClaude:
             from botocore.config import Config
             client = boto3.client(
                 "bedrock-runtime", region_name=region,
-                config=Config(read_timeout=180, connect_timeout=10, retries={"max_attempts": 1}))
+                # Non-streaming calls return only when generation ends: up to ~16k
+                # output tokens at ~85 tokens/s, so allow well over 180 s.
+                config=Config(read_timeout=300, connect_timeout=10, retries={"max_attempts": 1}))
         self.client = client
         self.model_id = model_id
         self.min_interval = min_interval

@@ -10,12 +10,14 @@ lose them.
 """
 from __future__ import annotations
 
+import copy
 import logging
+import threading
 from collections import OrderedDict
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -56,6 +58,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     llm = llm or build_llm(settings)
     library = load_library()
     recent: "OrderedDict[str, dict]" = OrderedDict()  # last results, in case a store write fails
+    recent_lock = threading.Lock()  # background narration threads write to `recent`
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -102,8 +105,47 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
         return {"sample": s, "org_name": name, "category": cat,
                 "answers": benchmark_answers(s, settings.in_scope_domains)}
 
+    def _narrate(record: SubmissionRecord, profile: dict, display: dict, gaps: list) -> None:
+        """Run the Bedrock pipeline and attach its narrative to the record. Scores are untouched."""
+        try:
+            result = orchestrate(llm, profile, display, gaps, library,
+                                 max_tokens=settings.bedrock_max_tokens,
+                                 fetch_timeout=settings.research_fetch_timeout_s,
+                                 skip_fetch=settings.llm_mode == "mock")
+        except Exception as e:  # never let orchestration take the scores down with it
+            log.exception("orchestration crashed")
+            from .orchestrator import OrchestrationResult
+            result = OrchestrationResult(status="error", error="orchestration_failed:%s" % type(e).__name__)
+
+        record.research_summary = result.research_summary
+        record.overview = result.overview
+        record.action_plan = result.action_plan
+        record.orchestration_status = result.status
+        record.orchestration_error = result.error
+        record.recommendations = (merge_recommendations(gaps, result.narratives)
+                                  if result.status == "ok" else [])
+
+    def _save(record: SubmissionRecord) -> bool:
+        """Persist the record and keep an in-memory copy in case the store write fails."""
+        persisted = True
+        try:
+            store.put(record)
+        except Exception:
+            log.exception("store write failed for %s", record.submission_id)
+            persisted = False
+        with recent_lock:
+            recent[record.submission_id] = record.to_dict()
+            recent.move_to_end(record.submission_id)
+            while len(recent) > 50:
+                recent.popitem(last=False)
+        return persisted
+
+    def _narrate_and_save(record: SubmissionRecord, profile: dict, display: dict, gaps: list) -> None:
+        _narrate(record, profile, display, gaps)
+        _save(record)
+
     @app.post("/api/submit")
-    def submit(req: SubmitRequest):
+    def submit(req: SubmitRequest, background: BackgroundTasks):
         profile = req.profile.model_dump()
         profile["org_name"] = profile["org_name"].strip()
         profile["website_url"] = profile["website_url"].strip()
@@ -128,39 +170,28 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             in_scope_domains=list(settings.in_scope_domains),
             answers=answers, scores=display, gaps=gaps)
 
-        try:
-            result = orchestrate(llm, profile, display, gaps, library,
-                                 max_tokens=settings.bedrock_max_tokens,
-                                 fetch_timeout=settings.research_fetch_timeout_s,
-                                 skip_fetch=settings.llm_mode == "mock")
-        except Exception as e:  # never let orchestration take the scores down with it
-            log.exception("orchestration crashed")
-            from .orchestrator import OrchestrationResult
-            result = OrchestrationResult(status="error", error="orchestration_failed:%s" % type(e).__name__)
+        if settings.async_orchestration:
+            # Save the scores now and answer at once (status "pending"); the narrative is
+            # added in the background and the client polls GET /api/submissions/{id}.
+            persisted = _save(record)
+            background.add_task(_narrate_and_save, record, profile, display, gaps)
+            body = record.to_dict()
+            body.pop("answers", None)
+            body["persisted"] = persisted
+            return JSONResponse(status_code=202, content=body)
 
-        record.research_summary = result.research_summary
-        record.overview = result.overview
-        record.action_plan = result.action_plan
-        record.orchestration_status = result.status
-        record.orchestration_error = result.error
-        record.recommendations = (merge_recommendations(gaps, result.narratives)
-                                  if result.status == "ok" else [])
-
+        _narrate(record, profile, display, gaps)
+        persisted = _save(record)
         body = record.to_dict()
         body.pop("answers", None)
-        persisted = True
-        try:
-            store.put(record)
-        except Exception:
-            log.exception("store write failed for %s", record.submission_id)
-            persisted = False
-        recent[record.submission_id] = record.to_dict()
-        while len(recent) > 50:
-            recent.popitem(last=False)
         body["persisted"] = persisted
         return body
 
     def _load(submission_id: str) -> dict:
+        with recent_lock:
+            cached = recent.get(submission_id)
+        if cached is not None:  # this process's copy is never older than the stored one
+            return copy.deepcopy(cached)
         try:
             rec = store.get(submission_id)
         except ValueError:
@@ -169,8 +200,6 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             rec = None
         if rec is not None:
             return rec.to_dict()
-        if submission_id in recent:
-            return recent[submission_id]
         raise HTTPException(404, "submission not found")
 
     @app.get("/api/submissions/{submission_id}")
