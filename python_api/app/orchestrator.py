@@ -55,6 +55,7 @@ RECOMMEND_SYSTEM = (
 @dataclass
 class OrchestrationResult:
     research_summary: str | None = None
+    research_source: str | None = None
     overview: str | None = None
     action_plan: list = field(default_factory=list)
     narratives: dict = field(default_factory=dict)   # question_id -> {narrative, resource_ids}
@@ -185,7 +186,8 @@ def _context_block(org_context: list[str] | None) -> str:
 
 def recommendation_prompt(profile: dict, display: dict, gaps: list[dict],
                           research: str | None, library: list[Resource],
-                          org_context: list[str] | None = None) -> str:
+                          org_context: list[str] | None = None,
+                          research_source: str | None = None) -> str:
     domains = [{
         "domain_id": d["domain_id"],
         "domain": d["domain_name"],
@@ -207,7 +209,7 @@ def recommendation_prompt(profile: dict, display: dict, gaps: list[dict],
     }
     return (
         "<organization>\nName: %s\nWebsite: %s\nCategory: %s\n</organization>\n\n"
-        "<research_summary>\n%s\n</research_summary>\n\n"
+        "<research_summary source=\"%s\">\n%s\n</research_summary>\n\n"
         "%s"
         "<deterministic_scores note=\"final; do not change\">\n%s\n</deterministic_scores>\n\n"
         "<capacity_gaps note=\"ordered by priority band, relative to this submission\">\n%s\n</capacity_gaps>\n\n"
@@ -219,7 +221,7 @@ def recommendation_prompt(profile: dict, display: dict, gaps: list[dict],
         "Then write a short action plan with 2-4 actions per timeframe drawn from the High-priority "
         "gaps first. Return JSON exactly in this shape:\n%s"
         % (profile.get("org_name", ""), profile.get("website_url", ""), profile.get("category", ""),
-           research or NO_RESEARCH_NOTE, _context_block(org_context),
+           research_source or "none", research or NO_RESEARCH_NOTE, _context_block(org_context),
            json.dumps({"overall_stats": display["overall_stats"], "domains": domains}, indent=1),
            _gap_lines(gaps), render_library(library) or "(empty)", len(gaps),
            json.dumps(schema, indent=1))
@@ -281,18 +283,27 @@ def orchestrate(llm: LLMClient, profile: dict, display: dict, gaps: list[dict],
                 library: list[Resource], *, max_tokens: int = 8000,
                 fetch=fetch_website_text, fetch_timeout: float = 6.0,
                 skip_fetch: bool = False, org_context: list[str] | None = None,
-                reuse_research: bool = False, research: str | None = None) -> OrchestrationResult:
-    """Run the pipeline. On a revision, ``reuse_research`` keeps the stored website summary
-    (``research``) instead of fetching and summarising the site again."""
+                reuse_research: bool = False, research: str | None = None,
+                research_source: str | None = None,
+                research_override: str | None = None) -> OrchestrationResult:
+    """Run the pipeline. On a revision, ``reuse_research`` keeps the stored summary
+    (``research``, from ``research_source``) instead of fetching and summarising the site again.
+    ``research_override`` is a package sample organization's written profile, used in place of
+    website research (samples have no websites), so no research call is made."""
     result = OrchestrationResult()
     ordered = sorted(gaps, key=lambda g: (BAND_ORDER.get(g["priority"], 9), -g["priority_score"]))
     library_ids = [r.id for r in library]
 
     # Call 1: research. Missing or unreadable website -> continue without it.
-    if not reuse_research:
-        research = None
     url = (profile.get("website_url") or "").strip()
-    if url and not reuse_research:
+    if reuse_research:
+        result.research_source = research_source if research else None
+    elif research_override:
+        research = research_override.strip()
+        result.research_source = "sample_profile"
+    else:
+        research = None
+    if url and not reuse_research and not research_override:
         website_text = "(offline mode: website not fetched)" if skip_fetch else fetch(url, timeout=fetch_timeout)
         if website_text:
             try:
@@ -300,6 +311,7 @@ def orchestrate(llm: LLMClient, profile: dict, display: dict, gaps: list[dict],
                                       max_tokens=600, context={"org_name": profile.get("org_name"),
                                                                "website_url": url}).strip() or None
                 result.calls.append("research")
+                result.research_source = "website" if research else None
             except ModelError:
                 research = None
     result.research_summary = research
@@ -309,7 +321,8 @@ def orchestrate(llm: LLMClient, profile: dict, display: dict, gaps: list[dict],
         return result
 
     # Call 2: resource-grounded recommendations.
-    prompt = recommendation_prompt(profile, display, ordered, research, library, org_context)
+    prompt = recommendation_prompt(profile, display, ordered, research, library, org_context,
+                                   result.research_source)
     by_domain = {}
     for r in library:
         for d in r.domains:

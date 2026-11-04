@@ -134,6 +134,9 @@ export function Results({ result, onResultChange, onStartOver }: {
         <div>
           <p className="eyebrow">Step 4 of 4 · {date}</p>
           <h1>{result.profile.org_name}</h1>
+          {result.profile.sample_id && (
+            <p className="sample-note">Sample {result.profile.sample_id} from the OCI package · synthetic organization and answers</p>
+          )}
           <p className="muted">
             {stats.total_questions} statements answered · {stats.total_gaps} practices to build on ·{" "}
             {stats.high_priority} to start with
@@ -196,6 +199,19 @@ export function Results({ result, onResultChange, onStartOver }: {
                 ))}
               </ul>
               <p className="muted small">The full 30-day to 6-month plan is in your detailed report.</p>
+            </div>
+          )}
+          {result.research_summary && (
+            <div className="card research">
+              <h2 className="section-title">
+                {result.research_source === "sample_profile" ? "Organization profile" : "What we read on your website"}
+              </h2>
+              <p>{result.research_summary}</p>
+              <p className="muted small">
+                {result.research_source === "sample_profile"
+                  ? "From the sample report in the OCI package; used in place of website research."
+                  : `Summarized by AI from ${result.profile.website_url}. Tell us if anything is off.`}
+              </p>
             </div>
           )}
 

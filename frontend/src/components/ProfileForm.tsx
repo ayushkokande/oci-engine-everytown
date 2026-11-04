@@ -1,5 +1,7 @@
-import { useState } from "react";
-import type { Category, Profile } from "../types";
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import { storage } from "../config";
+import type { Category, Profile, SampleOrg } from "../types";
 
 export function validateProfile(p: Profile): Partial<Record<"org_name" | "website_url", string>> {
   const errors: Partial<Record<"org_name" | "website_url", string>> = {};
@@ -14,6 +16,16 @@ export function ProfileForm({ initial, onSubmit }: { initial: Profile; onSubmit:
   const [p, setP] = useState<Profile>(initial);
   const [errors, setErrors] = useState<ReturnType<typeof validateProfile>>({});
   const [touched, setTouched] = useState(false);
+  const [samples, setSamples] = useState<SampleOrg[]>([]);
+  const [loadingSample, setLoadingSample] = useState<string | null>(null);
+
+  useEffect(() => { api.samples().then(setSamples).catch(() => setSamples([])); }, []);
+
+  const finish = (profile: Profile) => {
+    let url = profile.website_url.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    onSubmit({ ...profile, org_name: profile.org_name.trim(), website_url: url });
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,16 +33,32 @@ export function ProfileForm({ initial, onSubmit }: { initial: Profile; onSubmit:
     setErrors(errs);
     setTouched(true);
     if (Object.keys(errs).length === 0) {
-      let url = p.website_url.trim();
-      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-      onSubmit({ ...p, org_name: p.org_name.trim(), website_url: url });
+      // Switching from a sample to your own organization: don't carry the sample's answers over.
+      if (initial.sample_id && !p.sample_id) storage.remove("oci.answers");
+      finish(p);
     }
   };
 
   const update = (patch: Partial<Profile>) => {
     const next = { ...p, ...patch };
+    // Editing the name or website means it's no longer the package sample.
+    if ((patch.org_name !== undefined || patch.website_url !== undefined) && next.sample_id) delete next.sample_id;
     setP(next);
     if (touched) setErrors(validateProfile(next));
+  };
+
+  const useSample = async (s: SampleOrg) => {
+    setLoadingSample(s.id);
+    try {
+      const full = await api.sample(s.id);
+      storage.set("oci.answers", full.answers);  // the questionnaire opens fully answered
+      const profile: Profile = { org_name: s.org_name, website_url: s.website_url, category: s.category, sample_id: s.id };
+      setP(profile);
+      setErrors({});
+      finish(profile);
+    } finally {
+      setLoadingSample(null);
+    }
   };
 
   return (
@@ -42,11 +70,36 @@ export function ProfileForm({ initial, onSubmit }: { initial: Profile; onSubmit:
         Please don't enter personal information about staff or participants.
       </p>
 
+      {samples.length > 0 && (
+        <div className="card samples">
+          <div className="samples-head">
+            <h2 className="section-title">Demo with a sample organization</h2>
+            <span className="muted small">From the OCI package · synthetic, not real organizations</span>
+          </div>
+          <div className="sample-grid">
+            {samples.map((s) => (
+              <button key={s.id} type="button" className={`sample-card ${p.sample_id === s.id ? "selected" : ""}`}
+                onClick={() => useSample(s)} disabled={loadingSample !== null}>
+                <span className="sample-tag">Sample {s.id}</span>
+                <strong>{s.org_name}</strong>
+                <span className="muted small">{s.profile_line}</span>
+                <span className="sample-go">{loadingSample === s.id ? "Loading…" : "Use this sample →"}</span>
+              </button>
+            ))}
+          </div>
+          <p className="muted small">
+            Fills in the organization and all 72 answers from the package's response set. You can review or
+            change any answer before submitting.
+          </p>
+        </div>
+      )}
+
       <form className="card form" onSubmit={submit} noValidate>
+        <h2 className="section-title">Or enter your own organization</h2>
         <label className={`field ${errors.org_name ? "invalid" : ""}`}>
           <span>Organization name</span>
           <input value={p.org_name} onChange={(e) => update({ org_name: e.target.value })}
-            placeholder="e.g. Southside Youth Peace Collective" aria-invalid={!!errors.org_name} />
+            placeholder="Your organization's name" aria-invalid={!!errors.org_name} />
           {errors.org_name && <small className="field-error" role="alert">{errors.org_name}</small>}
         </label>
 

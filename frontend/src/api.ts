@@ -1,6 +1,6 @@
 import type {
   Analytics, Answer, ApiConfig, AssessmentChatResponse, ChatMessage, IncompleteError, Profile,
-  QuestionChatResponse, QuestionsPayload, ResourceInfo, StaffAssessmentDetail, StaffAssessmentRow,
+  QuestionChatResponse, QuestionsPayload, ResourceInfo, SampleOrg, StaffAssessmentDetail, StaffAssessmentRow,
   SubmissionResult,
 } from "./types";
 
@@ -74,8 +74,8 @@ export const api = {
     return body as QuestionChatResponse;
   },
   resources: () => getJson<{ resources: ResourceInfo[] }>("/resources").then((r) => r.resources),
-  sample: (id: string) =>
-    getJson<{ sample: string; org_name: string; category: string; answers: Record<string, Answer> }>(`/samples/${id}`),
+  samples: () => getJson<{ samples: SampleOrg[] }>("/samples").then((r) => r.samples),
+  sample: (id: string) => getJson<SampleOrg & { answers: Record<string, Answer> }>(`/samples/${id}`),
   submission: (id: string) => getJson<SubmissionResult>(`/submissions/${encodeURIComponent(id)}`),
   analytics: (params: { from?: string; to?: string; category?: string }) =>
     getJson<Analytics>(`/analytics${query(params)}`),

@@ -31,7 +31,7 @@ Demo logins: `demo` / `demo123` (organization), `staff` / `staff123` (CSF staff)
 | `OCI_AWS_REGION` | `us-west-2` | |
 | `OCI_STORE` | `local` | `local` (JSON files) or `s3` |
 | `OCI_S3_BUCKET` | – | From the stack output when `OCI_STORE=s3` |
-| `OCI_SEED_ON_STARTUP` | `true` | Seeds 9 synthetic submissions if the store is empty |
+| `OCI_SEED_ON_STARTUP` | `true` | Seeds the 3 package sample organizations (A/B/C) if the store is empty |
 | `VITE_ORG_USER` etc. | demo creds | Mocked login, front end only |
 
 ## Hard constraints

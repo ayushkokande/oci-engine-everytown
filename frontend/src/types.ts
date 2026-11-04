@@ -41,6 +41,18 @@ export interface Profile {
   org_name: string;
   website_url: string;
   category: Category;
+  /** Set when the profile came from one of the OCI package's sample organizations. */
+  sample_id?: string;
+}
+
+export interface SampleOrg {
+  id: string;
+  org_name: string;
+  category: Category;
+  website_url: string;
+  profile_line: string;
+  description: string;
+  source: string;
 }
 
 export interface DomainScore {
@@ -124,6 +136,7 @@ export interface SubmissionResult {
   scores: { overall_stats: OverallStats; domains: DomainScore[] };
   gaps: Gap[];
   research_summary: string | null;
+  research_source: "website" | "sample_profile" | null;
   overview: string | null;
   action_plan: ActionPhase[];
   recommendations: Recommendation[];

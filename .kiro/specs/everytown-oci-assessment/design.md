@@ -77,7 +77,7 @@ If either Bedrock call fails irrecoverably, the API returns an orchestration err
 staff login -> analytics view -> GET /analytics?from&to&category -> AnalyticsService reads all submissions from S3 -> aggregate metrics
 ```
 
-The Staff_User authenticates through the mocked staff path and sees aggregate-only figures (no named-organization comparison). Seeded synthetic submissions (samples A–C plus variants) ensure the view is populated on first run.
+The Staff_User authenticates through the mocked staff path and sees aggregate-only figures (no named-organization comparison). Seeded submissions for the package's sample organizations (A–C) ensure the view is populated on first run.
 
 ## Reuse of the Scoring_Engine (unchanged)
 
@@ -353,7 +353,7 @@ Output is **aggregate only** — no named-organization figures and no peer bench
 
 ### Seeded synthetic data
 
-On deploy/first run, the store is seeded with the three benchmark submissions (A, B, C) plus a handful of variants (e.g., higher-capacity and mixed-category versions) so the staff analytics view is meaningful immediately. All seed data is synthetic, contains no PII, and reuses the public benchmark answer sets.
+On deploy/first run, the store is seeded with the three sample organizations from the OCI package (A Southside Youth Peace Collective, B Riverbend Violence Interruption Network, C Metro Community Safety Alliance) so the staff analytics view is populated immediately. (Earlier synthetic variants were removed so the demo uses only the package's sample data.) All seed data is synthetic, contains no PII, and reuses the public benchmark answer sets.
 
 ## Security and Data Handling
 

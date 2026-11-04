@@ -143,7 +143,7 @@ The implementation languages are fixed by the design: **Python** (boto3) for the
     - List submission objects (narrowed by date prefix when possible), load each JSON, apply `from`/`to`/`category` filters, and compute total submissions, grantee vs non-grantee split, per-domain average capacity_pct and average/modal stage, and most-common gaps; output aggregate-only with no named-organization comparison
     - _Requirements: 9.1, 9.2_
   - [x] 9.2 Implement seeded synthetic submissions
-    - On deploy/first run, seed the store with benchmark submissions A, B, C plus a few variants (higher-capacity, mixed-category); all synthetic, no PII
+    - On deploy/first run, seed the store with the package's sample organizations A, B, C (no generated variants); all synthetic, no PII
     - _Requirements: 9.1, 10.2_
   - [x]* 9.3 Write property test for analytics
     - **Property 14: Analytics are correct and aggregate-only** (counts, split, per-domain averages, most-common gaps match independent recomputation over exactly the filtered records; no named-org comparison)

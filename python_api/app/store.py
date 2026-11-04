@@ -29,6 +29,7 @@ class SubmissionRecord:
     scores: dict
     gaps: list
     research_summary: str | None = None
+    research_source: str | None = None  # "website" | "sample_profile" | None
     recommendations: list = field(default_factory=list)
     action_plan: list = field(default_factory=list)
     overview: str | None = None

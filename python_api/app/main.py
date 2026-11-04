@@ -35,7 +35,7 @@ from .question_chat import explain_question
 from .questions import missing_answers, normalise_answers, questions_payload, validate_domain_config
 from .resources import load_library
 from .scoring_adapter import gaps_from_recs, score_submission
-from .seed import SAMPLES, benchmark_answers, seed_if_empty
+from .seed import SAMPLE_ORGS, benchmark_answers, ensure_samples, is_retired_seed, sample_org
 from .stage_profile import STAGE_EXPLAINER, stage_profile
 from .store import SubmissionRecord, SubmissionStore, build_store, new_submission_id
 
@@ -48,6 +48,7 @@ class Profile(BaseModel):
     org_name: str = Field(min_length=1, max_length=200)
     website_url: str = Field(default="", max_length=500)
     category: str = "grantee"
+    sample_id: str | None = Field(default=None, max_length=4)
 
 
 class SubmitRequest(BaseModel):
@@ -141,9 +142,9 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     async def lifespan(_app):
         if settings.seed_on_startup:
             try:
-                n = seed_if_empty(store, settings.in_scope_domains)
+                n = ensure_samples(store, settings.in_scope_domains)
                 if n:
-                    log.info("seeded %d synthetic submissions", n)
+                    log.info("added %d package sample organizations", n)
             except Exception:  # analytics just starts empty
                 log.exception("seeding failed")
         yield
@@ -197,29 +198,40 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
         return {"resources": [{"id": r.id, "title": r.title, "domains": list(r.domains), "source": r.source}
                               for r in library]}
 
+    def _sample_public(org: dict) -> dict:
+        return {k: org[k] for k in ("id", "org_name", "category", "website_url", "profile_line",
+                                    "description", "source")}
+
+    @app.get("/api/samples")
+    def samples():
+        """The three synthetic sample organizations shipped with the OCI package."""
+        return {"samples": [_sample_public(o) for o in SAMPLE_ORGS.values()]}
+
     @app.get("/api/samples/{sample}")
     def sample(sample: str):
-        """Demo helper: synthetic benchmark answers for the in-scope domains."""
-        s = sample.upper()
-        if s not in SAMPLES:
+        """One sample organization with its answers for the in-scope domains."""
+        org = sample_org(sample)
+        if org is None:
             raise HTTPException(404, "unknown sample")
-        name, cat = SAMPLES[s]
-        return {"sample": s, "org_name": name, "category": cat,
-                "answers": benchmark_answers(s, settings.in_scope_domains)}
+        return dict(_sample_public(org), sample=org["id"],
+                    answers=benchmark_answers(org["id"], settings.in_scope_domains))
 
     def _narrate(record: SubmissionRecord, profile: dict, display: dict, gaps: list) -> None:
         """Run the Bedrock pipeline and attach its narrative to the record. Scores are untouched."""
+        org = sample_org(profile.get("sample_id"))
         try:
             result = orchestrate(llm, profile, display, gaps, library,
                                  max_tokens=settings.bedrock_max_tokens,
                                  fetch_timeout=settings.research_fetch_timeout_s,
-                                 skip_fetch=settings.llm_mode == "mock")
+                                 skip_fetch=settings.llm_mode == "mock",
+                                 research_override=org["description"] if org else None)
         except Exception as e:  # never let orchestration take the scores down with it
             log.exception("orchestration crashed")
             from .orchestrator import OrchestrationResult
             result = OrchestrationResult(status="error", error="orchestration_failed:%s" % type(e).__name__)
 
         record.research_summary = result.research_summary
+        record.research_source = result.research_source
         record.overview = result.overview
         record.action_plan = result.action_plan
         record.orchestration_status = result.status
@@ -238,7 +250,8 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             result = orchestrate(llm, record.profile, record.scores, record.gaps, library,
                                  max_tokens=settings.bedrock_max_tokens,
                                  org_context=[c["text"] for c in record.org_context],
-                                 reuse_research=True, research=record.research_summary)
+                                 reuse_research=True, research=record.research_summary,
+                                 research_source=record.research_source)
         except Exception as e:
             log.exception("revision crashed")
             from .orchestrator import OrchestrationResult
@@ -292,6 +305,15 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
             raise HTTPException(422, "org_name is required")
         if profile["category"] not in CATEGORIES:
             raise HTTPException(422, "category must be one of %s" % (CATEGORIES,))
+        org = sample_org(profile.get("sample_id"))
+        if profile.get("sample_id") and org is None:
+            raise HTTPException(422, "unknown sample_id")
+        if org is not None and profile["org_name"] != org["org_name"]:
+            org = None  # renamed after picking a sample: treat as a normal organization
+        if org is None:
+            profile.pop("sample_id", None)
+        else:
+            profile["sample_id"] = org["id"]
 
         missing = missing_answers(req.answers, settings.in_scope_domains)
         if missing:  # engine is never invoked for an incomplete submission
@@ -413,7 +435,7 @@ def create_app(settings: Settings | None = None, store: SubmissionStore | None =
     # Login is mocked in the front end for the MVP; real access control is still to be decided.
 
     def _all_records() -> list[SubmissionRecord]:
-        by_id = {r.submission_id: r for r in store.list_records()}
+        by_id = {r.submission_id: r for r in store.list_records() if not is_retired_seed(r)}
         with recent_lock:  # this process's copy is never older than the stored one
             for sid, data in recent.items():
                 by_id[sid] = SubmissionRecord.from_dict(copy.deepcopy(data))

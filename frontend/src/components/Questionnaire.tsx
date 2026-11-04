@@ -115,6 +115,7 @@ export function Questionnaire({ profile, questionChats, onQuestionChatChange, on
       <aside className="quiz-rail">
         <p className="eyebrow">Step 2 of 4</p>
         <h2 className="rail-org">{profile.org_name}</h2>
+        {profile.sample_id && <p className="sample-note">Sample {profile.sample_id} from the OCI package · synthetic</p>}
         <div className="overall">
           <div className="overall-bar"><div style={{ width: `${(answered / total) * 100}%` }} /></div>
           <span>{answered} of {total} answered</span>
@@ -137,12 +138,12 @@ export function Questionnaire({ profile, questionChats, onQuestionChatChange, on
             <button className={view === "list" ? "active" : ""} onClick={() => setView("list")}>All statements</button>
           </div>
           <label className="demo-fill">
-            <span>Demo: fill with synthetic answers</span>
+            <span>Demo: fill with a sample organization's answers</span>
             <select defaultValue="" onChange={(e) => { loadSample(e.target.value); e.target.value = ""; }}>
               <option value="" disabled>Choose a sample…</option>
-              <option value="A">Sample A · early-stage org</option>
-              <option value="B">Sample B · developing org</option>
-              <option value="C">Sample C · established org</option>
+              <option value="A">A · Southside Youth Peace Collective</option>
+              <option value="B">B · Riverbend Violence Interruption Network</option>
+              <option value="C">C · Metro Community Safety Alliance</option>
             </select>
           </label>
           <button className="linklike" onClick={onBack}>← Edit organization details</button>

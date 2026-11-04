@@ -1,0 +1,32 @@
+{
+  "_note": "The three synthetic sample organizations shipped with the OCI package (Everytown_OCI_Package/03_Sample_Responses). Names, profile lines and descriptions are copied from the sample reports; answers live in ../benchmark/sample_<id>_answers.json. Not real organizations. 'category' is not stated in the package and is assigned here only so the staff view can show a grantee/non-grantee split. 'website_url' uses the reserved .example domain because the samples have no websites.",
+  "organizations": [
+    {
+      "id": "A",
+      "org_name": "Southside Youth Peace Collective",
+      "category": "grantee",
+      "website_url": "https://southside-youth-peace-collective.example",
+      "profile_line": "Grassroots, founded 2023 · 4 staff (2 FT) · ~$310K budget",
+      "description": "A neighborhood-rooted violence interruption and youth mentoring group in its third year. Credibility with young people and families is its greatest asset; nearly all back-office function runs through the founder/executive director. Funding is one city contract plus small individual gifts.",
+      "source": "OCI_Sample_A_Southside_Youth_Peace_Collective.docx"
+    },
+    {
+      "id": "B",
+      "org_name": "Riverbend Violence Interruption Network",
+      "category": "grantee",
+      "website_url": "https://riverbend-violence-interruption-network.example",
+      "profile_line": "Mid-size, founded 2016 · 19 staff · ~$2.1M budget",
+      "description": "An established CVI provider operating hospital-based intervention and street outreach across two precincts. Core systems exist and are used, but they are uneven: the board is functioning yet thin on finance expertise, and evaluation is still mostly output counting. Roughly 80% of revenue is restricted government funding.",
+      "source": "OCI_Sample_B_Riverbend_Violence_Interruption_Network.docx"
+    },
+    {
+      "id": "C",
+      "org_name": "Metro Community Safety Alliance",
+      "category": "non_grantee",
+      "website_url": "https://metro-community-safety-alliance.example",
+      "profile_line": "Mature, founded 2009 · 48 staff · ~$7.4M budget",
+      "description": "A regional anchor organization running CVI programming, a training institute for peer organizations, and a policy shop. Most domains are mature and integrated. The remaining work is at the top of the ladder: an endowment-grade reserve strategy, independent impact evaluation, and modernizing data infrastructure that has not kept pace with headcount.",
+      "source": "OCI_Sample_C_Metro_Community_Safety_Alliance.docx"
+    }
+  ]
+}

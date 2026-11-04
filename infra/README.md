@@ -54,7 +54,7 @@ make dev-api
 The role can read, write and list only `submissions/` in the bucket and call only the configured
 Claude profile. It cannot delete objects, list other buckets or call other models.
 
-On first start with an empty bucket, the API seeds 9 synthetic submissions so staff analytics has data.
+On first start with an empty bucket, the API seeds the 3 package sample organizations so staff analytics has data.
 
 ## Teardown
 
