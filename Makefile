@@ -1,4 +1,4 @@
-.PHONY: install dev-api dev-web build demo test benchmark lint
+.PHONY: install dev-api dev-web build demo serve test benchmark lint
 
 install:            ## Python + Node dependencies
 	pip install -r requirements-dev.txt
@@ -15,6 +15,9 @@ build:              ## Build the SPA into frontend/dist (served by the API)
 
 demo: build         ## One process, offline mock narrative, http://localhost:8000
 	cd python_api && OCI_LLM_MODE=mock uvicorn app.main:app --port 8000
+
+serve:              ## Serve an already-built SPA + API on 0.0.0.0:8000 (no Node needed), mock narrative
+	cd python_api && OCI_LLM_MODE=$${OCI_LLM_MODE:-mock} python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 benchmark:
 	cd python_api && python3 verify_benchmark.py

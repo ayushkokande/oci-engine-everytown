@@ -14,6 +14,9 @@ private/
 # Large binary archive (duplicates the unzipped package contents)
 Everytown/Everytown_OCI_Package.zip
 
+# Workshop environment snapshots (may contain local IDE/user config)
+/kiro-*.tgz
+
 # Python
 __pycache__/
 *.py[cod]
@@ -33,3 +36,4 @@ python_api/.data/
 .env.local
 .hypothesis/
 .pytest_cache/
+*.tsbuildinfo

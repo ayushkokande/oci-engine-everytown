@@ -47,7 +47,9 @@ class BedrockClaude:
             from botocore.config import Config
             client = boto3.client(
                 "bedrock-runtime", region_name=region,
-                config=Config(read_timeout=180, connect_timeout=10, retries={"max_attempts": 1}))
+                # Non-streaming calls return only when generation ends: up to ~16k
+                # output tokens at ~85 tokens/s, so allow well over 180 s.
+                config=Config(read_timeout=300, connect_timeout=10, retries={"max_attempts": 1}))
         self.client = client
         self.model_id = model_id
         self.min_interval = min_interval
@@ -91,7 +93,7 @@ class BedrockClaude:
 
 
 class MockClaude:
-    """Deterministic, offline. Builds output from the engine's own next steps."""
+    """Deterministic offline stand-in for research, recommendations, and chat."""
 
     def __init__(self, fail_on: set[str] | None = None, raw: dict | None = None):
         self.fail_on = fail_on or set()
@@ -105,6 +107,12 @@ class MockClaude:
         if kind in self.raw:
             return self.raw[kind]
         ctx = context or {}
+        if kind == "question_chat":
+            statement = ctx.get("question_text", "the statement shown in the questionnaire")
+            return ("[Offline mock - no model was called] In plain language, this asks whether the "
+                    "following practice is currently in place: \"%s\" Think about a concrete routine, "
+                    "example, or record that shows what happens today. This explanation does not choose "
+                    "Yes or No for you." % statement)
         if kind == "research":
             return ("[Offline mock - no model was called] %s (%s). Set OCI_LLM_MODE=bedrock to "
                     "have Claude on Amazon Bedrock summarise the organization's public website."

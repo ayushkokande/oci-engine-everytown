@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { storage } from "../config";
-import type { Answer, Profile, Question, QuestionsPayload } from "../types";
+import type { Answer, ChatMessage, Profile, Question, QuestionChats, QuestionsPayload } from "../types";
 import { STAGES } from "../types";
+import { QuestionChatDialog } from "./QuestionChatDialog";
 
 type FlatQ = Question & { domainId: string; domainName: string; indexInDomain: number; domainSize: number };
+type ChatQuestion = { question: Question; domainName: string };
 
-export function Questionnaire({ profile, onSubmit, onBack }: {
+export function Questionnaire({ profile, questionChats, onQuestionChatChange, onSubmit, onBack }: {
   profile: Profile;
+  questionChats: QuestionChats;
+  onQuestionChatChange: (questionId: string, messages: ChatMessage[]) => void;
   onSubmit: (answers: Record<string, Answer>) => void;
   onBack: () => void;
 }) {
@@ -17,7 +21,9 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<"quiz" | "list">("quiz");
   const [showMissing, setShowMissing] = useState(false);
+  const [chatQuestion, setChatQuestion] = useState<ChatQuestion | null>(null);
   const advanceTimer = useRef<number | null>(null);
+  const chatTrigger = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     api.questions().then(setData).catch(() => setLoadError("Couldn't load the questionnaire. Is the API running?"));
@@ -58,10 +64,26 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
     }
   }, [flat]);
 
+  const openQuestionChat = (question: Question, domainName: string, trigger: HTMLButtonElement) => {
+    if (advanceTimer.current) {
+      window.clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+    chatTrigger.current = trigger;
+    setChatQuestion({ question, domainName });
+  };
+
+  const closeQuestionChat = () => {
+    setChatQuestion(null);
+    window.requestAnimationFrame(() => chatTrigger.current?.focus());
+  };
+
   useEffect(() => {
-    if (view !== "quiz") return;
+    if (view !== "quiz" || chatQuestion) return;
     const onKey = (e: KeyboardEvent) => {
-      if (!current || (e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "SELECT") return;
+      const target = e.target as HTMLElement | null;
+      if (!current || target?.isContentEditable ||
+          (target && ["INPUT", "SELECT", "TEXTAREA", "BUTTON"].includes(target.tagName))) return;
       const k = e.key.toLowerCase();
       if (k === "y" || k === "1") answer(current.id, "yes");
       else if (k === "n" || k === "2") answer(current.id, "no");
@@ -70,7 +92,7 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, current, index, answer, goto]);
+  }, [view, current, index, answer, goto, chatQuestion]);
 
   const loadSample = async (id: string) => {
     if (!id) return;
@@ -136,7 +158,19 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
               <span className="muted">· {STAGES[current.stage - 1]} practice</span>
             </div>
             <p className="qcard-prompt">Is this true of your organization today?</p>
-            <h2 className="qcard-text">{current.text}</h2>
+            <div className="qcard-question">
+              <h2 className="qcard-text">{current.text}</h2>
+              <button
+                type="button"
+                className="btn ghost small explain-btn"
+                aria-haspopup="dialog"
+                aria-controls="question-explanation-dialog"
+                aria-label={`Explain more about statement ${current.id}`}
+                onClick={(event) => openQuestionChat(current, current.domainName, event.currentTarget)}
+              >
+                Explain more
+              </button>
+            </div>
             <div className="yn">
               {(["yes", "no"] as Answer[]).map((v) => (
                 <button key={v} className={`yn-btn ${scopedAnswers[current.id] === v ? "selected" : ""}`}
@@ -162,13 +196,25 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
                   return (
                     <div key={q.id} className={`qrow ${isMissing ? "missing" : ""}`} id={`q-${q.id}`}>
                       <span className="qrow-text">{q.text}</span>
-                      <span className="qrow-yn">
-                        {(["yes", "no"] as Answer[]).map((v) => (
-                          <button key={v} className={`mini-yn ${scopedAnswers[q.id] === v ? "selected" : ""}`}
-                            aria-pressed={scopedAnswers[q.id] === v} onClick={() => answer(q.id, v, false)}>
-                            {v === "yes" ? "Yes" : "No"}
-                          </button>
-                        ))}
+                      <span className="qrow-actions">
+                        <button
+                          type="button"
+                          className="btn ghost small explain-btn"
+                          aria-haspopup="dialog"
+                          aria-controls="question-explanation-dialog"
+                          aria-label={`Explain more about statement ${q.id}`}
+                          onClick={(event) => openQuestionChat(q, d.name, event.currentTarget)}
+                        >
+                          Explain more
+                        </button>
+                        <span className="qrow-yn">
+                          {(["yes", "no"] as Answer[]).map((v) => (
+                            <button key={v} className={`mini-yn ${scopedAnswers[q.id] === v ? "selected" : ""}`}
+                              aria-pressed={scopedAnswers[q.id] === v} onClick={() => answer(q.id, v, false)}>
+                              {v === "yes" ? "Yes" : "No"}
+                            </button>
+                          ))}
+                        </span>
                       </span>
                     </div>
                   );
@@ -197,6 +243,19 @@ export function Questionnaire({ profile, onSubmit, onBack }: {
           </button>
         </div>
       </div>
+
+      {chatQuestion && (
+        <QuestionChatDialog
+          key={chatQuestion.question.id}
+          question={chatQuestion.question}
+          domainName={chatQuestion.domainName}
+          messages={Array.isArray(questionChats[chatQuestion.question.id])
+            ? questionChats[chatQuestion.question.id]
+            : []}
+          onMessagesChange={(messages) => onQuestionChatChange(chatQuestion.question.id, messages)}
+          onClose={closeQuestionChat}
+        />
+      )}
     </section>
   );
 }

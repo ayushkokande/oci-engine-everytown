@@ -8,10 +8,32 @@ const STEPS: { id: Exclude<ProcessingStep, "done">; label: string; detail: strin
   { id: "researching", label: "Researching your organization", detail: "Reading your website and drafting recommendations" },
 ];
 const MIN_STEP_MS = 1400;
+const POLL_MS = 3000;
+const MAX_WAIT_MS = 6 * 60 * 1000;
 
 /**
- * The API runs every phase in one request, so the indicators are
- * time-sequenced here; the move to results is gated on the real response.
+ * With OCI_ASYNC_ORCHESTRATION the API saves the scores and answers "pending" at once,
+ * then adds Claude's narrative in the background. Poll until it is ready; if it never
+ * arrives, show the (complete) scores with the questionnaire's own next steps.
+ */
+async function waitForNarrative(first: SubmissionResult): Promise<SubmissionResult> {
+  const deadline = Date.now() + MAX_WAIT_MS;
+  let latest = first;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, POLL_MS));
+    try {
+      latest = await api.submission(first.submission_id);
+    } catch {
+      continue; // transient network or proxy error: keep waiting
+    }
+    if (latest.orchestration_status !== "pending") return latest;
+  }
+  return { ...latest, orchestration_status: "error", orchestration_error: "narrative_timeout" };
+}
+
+/**
+ * The indicators are time-sequenced here; the move to results is gated on the
+ * real (final) response.
  */
 export function Processing({ profile, answers, onDone, onError }: {
   profile: Profile;
@@ -22,15 +44,25 @@ export function Processing({ profile, answers, onDone, onError }: {
   const [active, setActive] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<SubmissionResult | null>(null);
-  const started = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+  const started = useRef(-1);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    if (started.current === attempt) return;  // StrictMode runs effects twice in dev
+    started.current = attempt;
     api.submit(profile, answers)
+      .then((r) => (r.orchestration_status === "pending" ? waitForNarrative(r) : r))
       .then(setResponse)
-      .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again."));
-  }, [profile, answers]);
+      .catch((e: unknown) => setError(e instanceof ApiError ? e.message
+        : `Unexpected error: ${e instanceof Error ? e.message : String(e)}. Your answers are saved.`));
+  }, [profile, answers, attempt]);
+
+  const retry = () => {
+    setError(null);
+    setResponse(null);
+    setActive(0);
+    setAttempt((a) => a + 1);
+  };
 
   // Advance one indicator per MIN_STEP_MS; the last one waits for the real response.
   useEffect(() => {
@@ -50,7 +82,7 @@ export function Processing({ profile, answers, onDone, onError }: {
     <section className="narrow processing">
       <p className="eyebrow">Step 3 of 4</p>
       <h1>Preparing recommendations for {profile.org_name}</h1>
-      <p className="lede">This usually takes under a minute.</p>
+      <p className="lede">This can take up to two minutes.</p>
       <ol className="proc-list card" aria-live="polite">
         {STEPS.map((s, i) => {
           const state = i < active ? "done" : i === active && !error ? "active" : "todo";
@@ -68,9 +100,12 @@ export function Processing({ profile, answers, onDone, onError }: {
         })}
       </ol>
       {error && (
-        <div className="alert error" role="alert">
-          {error}{" "}
-          <button className="linklike" onClick={onError}>Back to the questionnaire</button>
+        <div className="alert error proc-error" role="alert">
+          <span>{error}</span>
+          <span className="proc-error-actions">
+            <button className="btn primary small" onClick={retry}>Try again</button>
+            <button className="linklike" onClick={onError}>Back to the questionnaire</button>
+          </span>
         </div>
       )}
     </section>

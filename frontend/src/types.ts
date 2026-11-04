@@ -12,6 +12,20 @@ export interface Question {
   options: Answer[];
 }
 
+export type ChatRole = "user" | "assistant";
+
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+export type QuestionChats = Record<string, ChatMessage[]>;
+
+export interface QuestionChatResponse {
+  question_id: string;
+  reply: string;
+}
+
 export interface Domain {
   id: string;
   name: string;
