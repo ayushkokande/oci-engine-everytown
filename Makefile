@@ -1,4 +1,4 @@
-.PHONY: install dev-api dev-web build demo serve test benchmark lint
+.PHONY: install dev-api dev-web build demo serve reset-data test benchmark lint
 
 install:            ## Python + Node dependencies
 	pip install -r requirements-dev.txt
@@ -18,6 +18,9 @@ demo: build         ## One process, offline mock narrative, http://localhost:800
 
 serve:              ## Serve an already-built SPA + API on 0.0.0.0:8000 (no Node needed), mock narrative
 	cd python_api && OCI_LLM_MODE=$${OCI_LLM_MODE:-mock} python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+reset-data:         ## Delete local submissions; the 3 sample orgs are re-seeded on next start
+	rm -rf python_api/.data
 
 benchmark:
 	cd python_api && python3 verify_benchmark.py

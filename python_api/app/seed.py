@@ -1,13 +1,15 @@
-"""Seed the store with synthetic submissions so staff analytics has data on first run.
+"""Sample organizations from the OCI package, and seeding the store with them.
 
-Seeds are the three public benchmark samples (A, B, C) plus deterministic
-variants made by flipping a fixed fraction of answers. All synthetic, no PII.
-They are scored by the same unchanged engine as live submissions.
+The demo uses only the three synthetic sample organizations shipped in
+``Everytown_OCI_Package/03_Sample_Responses``: Southside Youth Peace
+Collective (A), Riverbend Violence Interruption Network (B) and Metro
+Community Safety Alliance (C). Their profiles are in
+``sample_data/organizations.json`` and their answers are the benchmark answer
+sets in ``benchmark/``. No other synthetic data is generated.
 """
 from __future__ import annotations
 
 import json
-import random
 from datetime import datetime, timedelta, timezone
 
 from .config import API_ROOT
@@ -16,12 +18,17 @@ from .scoring_adapter import gaps_from_recs, score_submission
 from .store import SubmissionRecord, new_submission_id
 
 BENCH = API_ROOT / "benchmark"
+SAMPLE_ORGS_FILE = API_ROOT / "sample_data" / "organizations.json"
 
-SAMPLES = {
-    "A": ("Southside Youth Peace Collective", "grantee"),
-    "B": ("Riverbend Violence Interruption Network", "grantee"),
-    "C": ("Metro Community Safety Alliance", "non_grantee"),
+SAMPLE_ORGS: dict[str, dict] = {
+    o["id"]: o for o in json.loads(SAMPLE_ORGS_FILE.read_text(encoding="utf-8"))["organizations"]
 }
+# Seeded at these offsets so date filters in the staff view have something to show.
+_SEED_DAYS_AGO = {"A": 21, "B": 45, "C": 75}
+
+
+def sample_org(sample_id: str | None) -> dict | None:
+    return SAMPLE_ORGS.get((sample_id or "").upper()) if sample_id else None
 
 
 def benchmark_answers(sample: str, in_scope: list[str]) -> dict:
@@ -29,42 +36,25 @@ def benchmark_answers(sample: str, in_scope: list[str]) -> dict:
     return {qid: data[qid] for qid in in_scope_question_ids(in_scope) if qid in data}
 
 
-def _variant(answers: dict, rng: random.Random, flip: float, toward: str | None) -> dict:
-    out = dict(answers)
-    for qid in sorted(out):
-        if rng.random() < flip:
-            out[qid] = toward or ("no" if out[qid] == "yes" else "yes")
-    return out
-
-
 def seed_records(in_scope: list[str], now: datetime | None = None) -> list[SubmissionRecord]:
     now = now or datetime.now(timezone.utc)
-    rng = random.Random(20261104)
-    plan = []
-    for i, (s, (name, cat)) in enumerate(SAMPLES.items()):
-        plan.append((name, cat, benchmark_answers(s, in_scope), 150 - 40 * i))
-    base = [p[2] for p in plan]
-    variants = [
-        ("Synthetic Variant 1", "grantee", _variant(base[0], rng, 0.25, "yes"), 75),
-        ("Synthetic Variant 2", "non_grantee", _variant(base[1], rng, 0.20, None), 60),
-        ("Synthetic Variant 3", "grantee", _variant(base[1], rng, 0.30, "yes"), 45),
-        ("Synthetic Variant 4", "non_grantee", _variant(base[0], rng, 0.15, None), 30),
-        ("Synthetic Variant 5", "grantee", _variant(base[2], rng, 0.20, "no"), 20),
-        ("Synthetic Variant 6", "non_grantee", _variant(base[2], rng, 0.10, None), 9),
-    ]
     records = []
-    for name, cat, answers, days_ago in plan + variants:
-        ts = (now - timedelta(days=days_ago)).replace(microsecond=0)
+    for sid, org in SAMPLE_ORGS.items():
+        ts = (now - timedelta(days=_SEED_DAYS_AGO.get(sid, 30))).replace(microsecond=0)
+        answers = benchmark_answers(sid, in_scope)
         recs, _summ, display = score_submission(answers, in_scope)
         records.append(SubmissionRecord(
-            submission_id=new_submission_id(name, ts),
+            submission_id=new_submission_id(org["org_name"], ts),
             timestamp=ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            profile={"org_name": name, "website_url": "", "category": cat},
-            category=cat,
+            profile={"org_name": org["org_name"], "website_url": org["website_url"],
+                     "category": org["category"], "sample_id": sid},
+            category=org["category"],
             in_scope_domains=list(in_scope),
             answers=answers,
             scores=display,
             gaps=gaps_from_recs(recs),
+            research_summary=org["description"],
+            research_source="sample_profile",
             orchestration_status="seed",
             synthetic=True,
         ))

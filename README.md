@@ -34,8 +34,19 @@ make install          # pip install -r requirements-dev.txt && npm install
 make demo             # builds the SPA, serves everything on http://localhost:8000 with OFFLINE MOCK narrative
 ```
 
-Log in with **demo / demo123** (organization) or **staff / staff123** (staff). On the questionnaire,
-"Demo: fill with synthetic answers" loads benchmark sample A, B or C so you can submit at once.
+Log in with **demo / demo123** (organization) or **staff / staff123** (staff). On the organization step,
+pick one of the package's sample organizations to load its profile and all 72 answers in one click:
+
+| Sample | Organization | Profile |
+|---|---|---|
+| A | Southside Youth Peace Collective | Grassroots, founded 2023 · 4 staff · ~$310K |
+| B | Riverbend Violence Interruption Network | Mid-size, founded 2016 · 19 staff · ~$2.1M |
+| C | Metro Community Safety Alliance | Mature, founded 2009 · 48 staff · ~$7.4M |
+
+These are the synthetic samples from `Everytown/Everytown_OCI_Package/03_Sample_Responses/` (profiles in
+`python_api/sample_data/organizations.json`, answers in `python_api/benchmark/`). They have no websites, so
+their written profile from the sample report stands in for the website research step. The staff view is
+seeded with the same three organizations; `make reset-data` clears local test submissions.
 
 ### In the hackathon workshop IDE (code-server)
 
@@ -77,7 +88,7 @@ reject the `temperature` setting the app sends.
 | `OCI_STORE` | `local` | `local` (JSON files, same key scheme) or `s3` |
 | `OCI_S3_BUCKET` | – | Bucket from the stack output, when `OCI_STORE=s3` |
 | `OCI_LOCAL_STORE_DIR` | `python_api/.data` | Local store root |
-| `OCI_SEED_ON_STARTUP` | `true` | Seed 9 synthetic submissions if the store is empty |
+| `OCI_SEED_ON_STARTUP` | `true` | Seed the 3 package sample organizations if the store is empty |
 | `OCI_BEDROCK_MAX_TOKENS` | `16000` | Output budget for the recommendation call. On Sonnet 4.6, 60 gaps needed ~9,200 tokens and 71 gaps ~10,000; 8,000 cut the JSON off. |
 | `OCI_BEDROCK_CHAT_MAX_TOKENS` | `500` | Output budget for each question-explanation chat response. |
 | `OCI_BEDROCK_ASSESSMENT_CHAT_MAX_TOKENS` | `900` | Output budget for each reply in the feedback-refinement and staff assessment chats. |

@@ -167,12 +167,12 @@ def test_staff_list_and_detail_link_insights_to_feedback(client_factory):
     client, _, _ = _seeded_client(client_factory)
     mine = _submit(client, "A")
     rows = client.get("/api/staff/assessments").json()["assessments"]
-    assert len(rows) == 10 and rows[0]["submission_id"] == mine["submission_id"]
+    assert len(rows) == 4 and rows[0]["submission_id"] == mine["submission_id"]  # 3 package samples + this one
     assert rows[0]["org_name"] == "Test Org" and "answers" not in rows[0]
-    assert len(client.get("/api/staff/assessments?category=non_grantee").json()["assessments"]) == 4
+    assert len(client.get("/api/staff/assessments?category=non_grantee").json()["assessments"]) == 1  # Metro (C)
 
     detail = client.get("/api/staff/assessments/" + mine["submission_id"]).json()
-    assert "answers" not in detail and detail["network"]["assessments"] == 10
+    assert "answers" not in detail and detail["network"]["assessments"] == 4
     own = {g["question_id"] for g in mine["gaps"]}
     kinds = {i["kind"] for i in detail["insights"]}
     assert "stage" in kinds and "common_gap" in kinds

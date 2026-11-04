@@ -20,7 +20,7 @@ python_api/
   app/stage_profile.py   shared stage profile (results, PDF, staff) explaining the engine's stage
   app/insights.py        code-computed per-assessment insights for staff, linked by question id
   app/assistant_chat.py  feedback-refinement chat (org) and per-assessment chat (staff)
-  app/seed.py            synthetic seed submissions (benchmark A/B/C + variants)
+  app/seed.py            package sample orgs A/B/C: seeding + profiles (sample_data/organizations.json)
   app/resources.py       Resource_Library loader
   resource_library/      R1–R6 placeholder resources (*.md with front matter)
   engine/ utils/ data/ verify_benchmark.py benchmark/   VENDORED — do not edit

@@ -111,8 +111,8 @@ Run these every time a template changes, and wire the first two into CI:
 
 - Synthetic or scrubbed data only. No PII, no real organization or financial
   data in any bucket, parameter, or seeded object.
-- Seed data for analytics comes from the public benchmark samples (A/B/C) and
-  synthetic variants only.
+- Seed data for analytics comes from the package's sample organizations (A/B/C)
+  only.
 
 ## Open-source hygiene
 

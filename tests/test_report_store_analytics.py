@@ -162,12 +162,12 @@ def test_api_end_to_end(client_factory):
         q = client.get("/api/questions").json()
         assert q["in_scope_domains"] == SCOPE
         before = client.get("/api/analytics").json()["total_submissions"]
-        assert before == 9
+        assert before == 3
         body = client.post("/api/submit", json={"profile": {"org_name": "E2E Org", "website_url": "", "category": "non_grantee"},
                                                 "answers": benchmark_answers("C", SCOPE)}).json()
         assert body["orchestration_status"] == "ok" and body["recommendations"]
         assert "answers" not in body
-        assert client.get("/api/analytics").json()["total_submissions"] == 10
+        assert client.get("/api/analytics").json()["total_submissions"] == 4
         assert client.get("/api/analytics", params={"category": "bogus"}).status_code == 422
         assert client.get("/api/report/not-a-real-id").status_code == 404
         assert client.get("/api/submissions/" + body["submission_id"]).json()["profile"]["org_name"] == "E2E Org"
@@ -184,3 +184,63 @@ def test_infra_template_static_scan():
                             r"SecretsManager|Marketplace|MarketplaceCatalog)::", t), t
     assert set(types) <= {"AWS::S3::Bucket", "AWS::S3::BucketPolicy", "AWS::IAM::Role", "String"}, types
     assert not re.search(r"\b\d{12}\b", text), "no hardcoded account ids"
+
+
+def test_seed_is_exactly_the_three_package_samples():
+    from app.seed import SAMPLE_ORGS
+    recs = seed_records(SCOPE)
+    names = sorted(r.profile["org_name"] for r in recs)
+    assert names == sorted(["Southside Youth Peace Collective", "Riverbend Violence Interruption Network",
+                            "Metro Community Safety Alliance"])
+    assert all(r.synthetic and r.research_source == "sample_profile" for r in recs)
+    for r in recs:  # scores match the package's own answer sets
+        sid = r.profile["sample_id"]
+        assert r.answers == benchmark_answers(sid, SCOPE)
+        assert r.research_summary == SAMPLE_ORGS[sid]["description"]
+
+
+def test_sample_scores_match_package_expected_results():
+    """Per-domain capacity, stage and gap counts for A/B/C equal the package's expected files."""
+    from conftest import API
+    from app.scoring_adapter import score_submission
+    for sid in "ABC":
+        expected = json.loads((API / "benchmark" / ("sample_%s_expected.json" % sid)).read_text())
+        want = {d["domain_id"]: d for d in expected["domains"]}
+        _, _, display = score_submission(benchmark_answers(sid, SCOPE), SCOPE)
+        for d in display["domains"]:
+            w = want[d["domain_id"]]
+            assert (d["score_pct"], d["estimated_stage"], d["gap_count"]) == (
+                w["capacity_pct"], w["estimated_stage"], w["gap_count"])
+
+
+def test_sample_submission_uses_profile_instead_of_website(client_factory):
+    from app.llm import MockClaude
+    llm = MockClaude()
+    client, _, _ = client_factory(llm=llm)
+    with client:
+        s = client.get("/api/samples").json()["samples"]
+        assert [x["org_name"] for x in s] == ["Southside Youth Peace Collective",
+                                             "Riverbend Violence Interruption Network",
+                                             "Metro Community Safety Alliance"]
+        a = client.get("/api/samples/a").json()
+        body = client.post("/api/submit", json={"profile": {"org_name": a["org_name"], "website_url": a["website_url"],
+                                                            "category": a["category"], "sample_id": "A"},
+                                                "answers": a["answers"]}).json()
+    assert body["research_source"] == "sample_profile"
+    assert body["research_summary"] == a["description"]
+    assert [c["kind"] for c in llm.calls] == ["recommend"]
+    assert 'source="sample_profile"' in llm.calls[0]["prompt"] and a["description"] in llm.calls[0]["prompt"]
+    pdf = _pdf_text(client.get("/api/report/" + body["submission_id"]).content)
+    assert "sample profile from the OCI package" in pdf
+
+
+def test_renamed_sample_is_treated_as_a_normal_org(client_factory):
+    client, _, llm = client_factory()
+    a = client.get("/api/samples/A").json()
+    body = client.post("/api/submit", json={"profile": {"org_name": "Giggles", "website_url": "",
+                                                        "category": "grantee", "sample_id": "A"},
+                                            "answers": a["answers"]}).json()
+    assert body["research_source"] is None and body["research_summary"] is None
+    assert "sample_id" not in body["profile"]
+    assert client.post("/api/submit", json={"profile": {"org_name": "X", "sample_id": "Z"},
+                                            "answers": a["answers"]}).status_code == 422
