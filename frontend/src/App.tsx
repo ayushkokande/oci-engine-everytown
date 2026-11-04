@@ -143,7 +143,7 @@ export default function App() {
             onError={() => setStep("questionnaire")}
           />
         )}
-        {step === "results" && result && <Results result={result} onStartOver={startOver} />}
+        {step === "results" && result && <Results result={result} onResultChange={setResult} onStartOver={startOver} />}
         {step === "staff" && <StaffAnalytics />}
       </main>
 
