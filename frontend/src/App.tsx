@@ -168,9 +168,9 @@ export default function App() {
         )}
         {step === "results" && result && (
           <Results result={result} onResultChange={setResult} onStartOver={startOver}
-            onChangeAnswer={(questionId, to) => {
+            onChangeAnswers={(changes) => {
               const from = result;
-              setCorrection({ run: () => api.changeAnswers(from.submission_id, { [questionId]: to }), from });
+              setCorrection({ run: () => api.changeAnswers(from.submission_id, changes), from });
               setStep("processing");
             }} />
         )}

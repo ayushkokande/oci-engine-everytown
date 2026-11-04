@@ -19,44 +19,6 @@ const SUGGESTIONS = [
 
 const label = (a: Answer | null | undefined) => (a === "yes" ? "Yes" : a === "no" ? "No" : "not answered");
 
-/**
- * Lets the organization correct its own answer to one statement. The engine re-scores a
- * corrected copy as a new submission; the AI never changes answers.
- */
-function ChangeAnswer({ r, answer, onConfirm }: {
-  r: Recommendation;
-  answer: Answer | null | undefined;
-  onConfirm: (to: Answer) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  if (answer !== "yes" && answer !== "no") return null;
-  const to: Answer = answer === "yes" ? "no" : "yes";
-  if (!open) {
-    return (
-      <button type="button" className="linklike change-answer-link" onClick={() => setOpen(true)}>
-        Change my answer
-      </button>
-    );
-  }
-  return (
-    <div className="change-answer" role="group" aria-label={`Change your answer to ${r.question_id}`}>
-      <p>
-        You answered <strong>{label(answer)}</strong> to: “{r.text}” Change it to <strong>{label(to)}</strong>?
-      </p>
-      <p className="muted small">
-        This re-scores a corrected copy of your assessment with the OCI engine. Your other answers stay the
-        same, the original assessment is kept, and any context you added carries over.
-      </p>
-      <div className="change-answer-actions">
-        <button type="button" className="btn primary small" onClick={() => onConfirm(to)}>
-          Change to {label(to)} and re-score
-        </button>
-        <button type="button" className="linklike" onClick={() => setOpen(false)}>Cancel</button>
-      </div>
-    </div>
-  );
-}
-
 async function waitForRevision(id: string): Promise<SubmissionResult> {
   const deadline = Date.now() + MAX_WAIT_MS;
   while (Date.now() < deadline) {
@@ -90,11 +52,12 @@ function RecBody({ r, resById }: { r: Recommendation; resById: Record<string, Re
   );
 }
 
-export function Results({ result, onResultChange, onStartOver, onChangeAnswer }: {
+export function Results({ result, onResultChange, onStartOver, onChangeAnswers }: {
   result: SubmissionResult;
   onResultChange: (r: SubmissionResult) => void;
   onStartOver: () => void;
-  onChangeAnswer?: (questionId: string, to: Answer) => void;
+  /** The organization corrects its own answers; the engine re-scores them as a new submission. */
+  onChangeAnswers?: (changes: Record<string, Answer>) => void;
 }) {
   const id = result.submission_id;
   const chatKey = `oci.feedbackChat.${id}`;
@@ -106,6 +69,8 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [justUpdated, setJustUpdated] = useState(false);
   const [openAll, setOpenAll] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => { api.resources().then(setResources).catch(() => setResources([])); }, []);
   useEffect(() => storage.set(`oci.planned.${id}`, planned), [planned, id]);
@@ -161,10 +126,31 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
     }
   };
 
+  // Answer corrections: pick several recommendations, then re-score them together.
   const answerOf = Object.fromEntries(result.gaps.map((g) => [g.question_id, g.answer]));
-  const changeAnswer = (r: Recommendation) => (onChangeAnswer && !result.superseded_by
-    ? <ChangeAnswer r={r} answer={answerOf[r.question_id]} onConfirm={(to) => onChangeAnswer(r.question_id, to)} />
-    : null);
+  const flip = (a: Answer | null | undefined): Answer | null => (a === "yes" ? "no" : a === "no" ? "yes" : null);
+  const canCorrect = !!onChangeAnswers && !result.superseded_by && result.gaps.some((g) => flip(g.answer));
+  const toggleSelected = (qid: string) =>
+    setSelected((cur) => (cur.includes(qid) ? cur.filter((q) => q !== qid) : [...cur, qid]));
+  const startSelecting = () => { setSelecting(true); setOpenAll(true); };
+  const cancelSelecting = () => { setSelecting(false); setSelected([]); };
+  const rescore = () => {
+    if (!onChangeAnswers || !selected.length) return;
+    const changes: Record<string, Answer> = {};
+    selected.forEach((q) => { const to = flip(answerOf[q]); if (to) changes[q] = to; });
+    onChangeAnswers(changes);
+  };
+  const selectBox = (r: Recommendation) => {
+    const to = flip(answerOf[r.question_id]);
+    if (!selecting || !to) return null;
+    return (
+      <label className={`select-change ${selected.includes(r.question_id) ? "on" : ""}`}
+        onClick={(e) => e.stopPropagation()}>
+        <input type="checkbox" checked={selected.includes(r.question_id)} onChange={() => toggleSelected(r.question_id)} />
+        Change answer to {label(to)}
+      </label>
+    );
+  };
 
   const plannedToggle = (r: Recommendation) => (
     <label className="plan-toggle">
@@ -219,6 +205,48 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
         </div>
       )}
 
+      {canCorrect && (
+        <div className={`card correct-bar ${selecting ? "active" : ""}`}>
+          {!selecting ? (
+            <>
+              <div>
+                <strong>Already doing some of these?</strong>{" "}
+                <span className="muted small">
+                  Select the practices that don't match your situation and re-score them together.
+                </span>
+              </div>
+              <button type="button" className="btn ghost small" onClick={startSelecting}>Select answers to change</button>
+            </>
+          ) : (
+            <>
+              <div className="correct-bar-info">
+                <strong>{selected.length} selected</strong>{" "}
+                <span className="muted small">
+                  {selected.length
+                    ? "Each selected answer is flipped. The OCI engine re-scores a corrected copy; your original assessment is kept."
+                    : "Tick “Change answer” on any recommendation below."}
+                </span>
+                {selected.length > 0 && (
+                  <div className="sel-chips">
+                    {selected.map((q) => (
+                      <button key={q} type="button" className="qref" title="Remove from selection" onClick={() => toggleSelected(q)}>
+                        {q} {label(answerOf[q])} → {label(flip(answerOf[q]))} ×
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="correct-bar-actions">
+                <button type="button" className="btn primary small" disabled={!selected.length} onClick={rescore}>
+                  Re-score{selected.length ? ` ${selected.length}` : ""}
+                </button>
+                <button type="button" className="linklike" onClick={cancelSelecting}>Cancel</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {result.overview && (
         <p className="overview">
           {(result.revision_count ?? 0) > 0 && <span className="chip updated-chip">Updated with your context</span>}
@@ -231,15 +259,15 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
           <h2 className="section-title">Where to start</h2>
           <div className="recs">
             {startHere.map((r) => (
-              <article key={r.question_id} className={`card rec ${planned[r.question_id] ? "planned" : ""}`}>
+              <article key={r.question_id}
+                className={`card rec ${planned[r.question_id] ? "planned" : ""} ${selected.includes(r.question_id) ? "selected-change" : ""}`}>
                 <header className="rec-head">
                   <span className="band-pill band-High">Start here</span>
                   <span className="muted small">{r.domain_name} · {r.question_id}</span>
-                  {plannedToggle(r)}
+                  {selectBox(r) ?? plannedToggle(r)}
                 </header>
                 <h3 className="rec-statement">{r.text}</h3>
                 <RecBody r={r} resById={resById} />
-                {changeAnswer(r)}
               </article>
             ))}
             {startHere.length === 0 && <p className="muted">No capacity gaps were found in this assessment.</p>}
@@ -302,7 +330,7 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
             id="refine"
             title="Refine this feedback"
             intro={<>Tell us what the assessment couldn't know: your team size, what you already do informally,
-              deadlines or constraints. Then update your feedback. Your answers and scores stay as submitted; to correct an answer, use “Change my answer” on that recommendation.</>}
+              deadlines or constraints. Then update your feedback. Your answers and scores stay as submitted; to correct answers, use “Select answers to change” at the top.</>}
             placeholder="For example: We have three staff and our board meets quarterly."
             suggestions={SUGGESTIONS}
             assistantName="Feedback guide"
@@ -357,15 +385,16 @@ export function Results({ result, onResultChange, onStartOver, onChangeAnswer }:
             <div key={b} className="band-group">
               <h3><span className={`band-pill band-${b}`}>{BAND_LABEL[b]}</span> {inBand.length} {b} priority</h3>
               {inBand.map((r) => (
-                <details key={r.question_id} id={`rec-${r.question_id}`} className={`rec-row ${planned[r.question_id] ? "planned" : ""}`}>
+                <details key={r.question_id} id={`rec-${r.question_id}`}
+                  className={`rec-row ${planned[r.question_id] ? "planned" : ""} ${selected.includes(r.question_id) ? "selected-change" : ""}`}>
                   <summary>
                     <span className="rec-row-text">{r.text}</span>
                     <span className="muted small">{r.domain_name} · {r.question_id}</span>
+                    {selectBox(r)}
                   </summary>
                   <div className="rec-row-body">
                     <RecBody r={r} resById={resById} />
                     {plannedToggle(r)}
-                    {changeAnswer(r)}
                   </div>
                 </details>
               ))}

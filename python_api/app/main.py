@@ -59,10 +59,7 @@ class SubmitRequest(BaseModel):
 
 class ChangeAnswersRequest(BaseModel):
     """Answers the organization itself chose to change, keyed by question id."""
-    changes: dict[str, Literal["yes", "no"]] = Field(min_length=1, max_length=10)
-
-
-MAX_ANSWER_CHANGES = 10
+    changes: dict[str, Literal["yes", "no"]] = Field(min_length=1, max_length=143)
 
 
 class QuestionChatMessage(BaseModel):

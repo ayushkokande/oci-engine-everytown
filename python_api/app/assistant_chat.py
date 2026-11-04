@@ -38,7 +38,7 @@ FEEDBACK_CHAT_SYSTEM = (
     "feedback more useful, such as team size, budget, what they already do informally, upcoming "
     "deadlines or constraints. Ask at most one question per reply. If they say a practice is already "
     "in place, explain that you can't change answers or scores yourself, and that they have two "
-    "options: press 'Change my answer' on that recommendation's card, which re-scores a corrected copy "
+    "options: press 'Select answers to change' at the top of the results, tick the practices that are already in place and press 'Re-score', which re-scores a corrected copy "
     "of the assessment (the original is kept), or keep the answer and press 'Update my feedback' so "
     "the recommendation text takes what they said into account. When they "
     "have shared useful context, tell them they can press 'Update my feedback' to regenerate the "
