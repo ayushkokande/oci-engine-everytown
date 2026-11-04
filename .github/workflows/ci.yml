@@ -1,0 +1,20 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: pip install -r requirements-dev.txt
+      - name: Benchmark (samples A, B, C must PASS)
+        run: cd python_api && python verify_benchmark.py
+      - name: Tests (Bedrock and S3 always mocked)
+        run: python -m pytest -q tests
+      - name: CloudFormation lint
+        run: cfn-lint infra/*.yaml
+      - name: Front end build
+        run: cd frontend && npm ci && npm run build

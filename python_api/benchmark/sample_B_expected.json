@@ -1,0 +1,471 @@
+{
+  "sample": "B",
+  "organization": "Riverbend Violence Interruption Network",
+  "scope": "all 8 domains",
+  "totals": {
+    "statements": 143,
+    "gaps": 57,
+    "high": 19,
+    "medium": 19,
+    "low": 19
+  },
+  "domains": [
+    {
+      "domain_id": "PL",
+      "capacity_pct": 66.7,
+      "estimated_stage": "Developing",
+      "gap_count": 5,
+      "total_questions": 15
+    },
+    {
+      "domain_id": "FR",
+      "capacity_pct": 45.0,
+      "estimated_stage": "Emerging",
+      "gap_count": 11,
+      "total_questions": 20
+    },
+    {
+      "domain_id": "GV",
+      "capacity_pct": 50.0,
+      "estimated_stage": "Developing",
+      "gap_count": 9,
+      "total_questions": 18
+    },
+    {
+      "domain_id": "HR",
+      "capacity_pct": 77.3,
+      "estimated_stage": "Developing",
+      "gap_count": 5,
+      "total_questions": 22
+    },
+    {
+      "domain_id": "FM",
+      "capacity_pct": 65.0,
+      "estimated_stage": "Developing",
+      "gap_count": 7,
+      "total_questions": 20
+    },
+    {
+      "domain_id": "ML",
+      "capacity_pct": 47.1,
+      "estimated_stage": "Emerging",
+      "gap_count": 9,
+      "total_questions": 17
+    },
+    {
+      "domain_id": "CE",
+      "capacity_pct": 87.5,
+      "estimated_stage": "Strengthening",
+      "gap_count": 2,
+      "total_questions": 16
+    },
+    {
+      "domain_id": "TI",
+      "capacity_pct": 40.0,
+      "estimated_stage": "Emerging",
+      "gap_count": 9,
+      "total_questions": 15
+    }
+  ],
+  "gaps": [
+    {
+      "question_id": "FR7",
+      "domain_id": "FR",
+      "stage": 3,
+      "priority_score": 4.65,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR8",
+      "domain_id": "FR",
+      "stage": 3,
+      "priority_score": 4.65,
+      "priority": "High"
+    },
+    {
+      "question_id": "ML6",
+      "domain_id": "ML",
+      "stage": 3,
+      "priority_score": 3.67,
+      "priority": "High"
+    },
+    {
+      "question_id": "TI6",
+      "domain_id": "TI",
+      "stage": 3,
+      "priority_score": 3.36,
+      "priority": "High"
+    },
+    {
+      "question_id": "TI8",
+      "domain_id": "TI",
+      "stage": 3,
+      "priority_score": 3.36,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR10",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR11",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR12",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR15",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR16",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "FR17",
+      "domain_id": "FR",
+      "stage": 4,
+      "priority_score": 3.1,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV9",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV10",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV11",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV13",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV14",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV15",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "GV16",
+      "domain_id": "GV",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "FM9",
+      "domain_id": "FM",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "High"
+    },
+    {
+      "question_id": "FM10",
+      "domain_id": "FM",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "FM11",
+      "domain_id": "FM",
+      "stage": 4,
+      "priority_score": 2.7,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "PL10",
+      "domain_id": "PL",
+      "stage": 4,
+      "priority_score": 2.67,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "PL11",
+      "domain_id": "PL",
+      "stage": 4,
+      "priority_score": 2.67,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "PL13",
+      "domain_id": "PL",
+      "stage": 4,
+      "priority_score": 2.67,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML10",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML11",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML12",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML13",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML14",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "ML15",
+      "domain_id": "ML",
+      "stage": 4,
+      "priority_score": 2.45,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "TI9",
+      "domain_id": "TI",
+      "stage": 4,
+      "priority_score": 2.24,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "TI10",
+      "domain_id": "TI",
+      "stage": 4,
+      "priority_score": 2.24,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "TI11",
+      "domain_id": "TI",
+      "stage": 4,
+      "priority_score": 2.24,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "TI12",
+      "domain_id": "TI",
+      "stage": 4,
+      "priority_score": 2.24,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "HR13",
+      "domain_id": "HR",
+      "stage": 4,
+      "priority_score": 2.21,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "HR16",
+      "domain_id": "HR",
+      "stage": 4,
+      "priority_score": 2.21,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "HR19",
+      "domain_id": "HR",
+      "stage": 4,
+      "priority_score": 2.21,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "FR18",
+      "domain_id": "FR",
+      "stage": 5,
+      "priority_score": 1.55,
+      "priority": "Medium"
+    },
+    {
+      "question_id": "FR19",
+      "domain_id": "FR",
+      "stage": 5,
+      "priority_score": 1.55,
+      "priority": "Low"
+    },
+    {
+      "question_id": "FR20",
+      "domain_id": "FR",
+      "stage": 5,
+      "priority_score": 1.55,
+      "priority": "Low"
+    },
+    {
+      "question_id": "GV17",
+      "domain_id": "GV",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "GV18",
+      "domain_id": "GV",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "FM17",
+      "domain_id": "FM",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "FM18",
+      "domain_id": "FM",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "FM19",
+      "domain_id": "FM",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "FM20",
+      "domain_id": "FM",
+      "stage": 5,
+      "priority_score": 1.35,
+      "priority": "Low"
+    },
+    {
+      "question_id": "PL14",
+      "domain_id": "PL",
+      "stage": 5,
+      "priority_score": 1.33,
+      "priority": "Low"
+    },
+    {
+      "question_id": "PL15",
+      "domain_id": "PL",
+      "stage": 5,
+      "priority_score": 1.33,
+      "priority": "Low"
+    },
+    {
+      "question_id": "ML16",
+      "domain_id": "ML",
+      "stage": 5,
+      "priority_score": 1.22,
+      "priority": "Low"
+    },
+    {
+      "question_id": "ML17",
+      "domain_id": "ML",
+      "stage": 5,
+      "priority_score": 1.22,
+      "priority": "Low"
+    },
+    {
+      "question_id": "TI13",
+      "domain_id": "TI",
+      "stage": 5,
+      "priority_score": 1.12,
+      "priority": "Low"
+    },
+    {
+      "question_id": "TI14",
+      "domain_id": "TI",
+      "stage": 5,
+      "priority_score": 1.12,
+      "priority": "Low"
+    },
+    {
+      "question_id": "TI15",
+      "domain_id": "TI",
+      "stage": 5,
+      "priority_score": 1.12,
+      "priority": "Low"
+    },
+    {
+      "question_id": "HR21",
+      "domain_id": "HR",
+      "stage": 5,
+      "priority_score": 1.1,
+      "priority": "Low"
+    },
+    {
+      "question_id": "HR22",
+      "domain_id": "HR",
+      "stage": 5,
+      "priority_score": 1.1,
+      "priority": "Low"
+    },
+    {
+      "question_id": "CE14",
+      "domain_id": "CE",
+      "stage": 5,
+      "priority_score": 0.9,
+      "priority": "Low"
+    },
+    {
+      "question_id": "CE16",
+      "domain_id": "CE",
+      "stage": 5,
+      "priority_score": 0.9,
+      "priority": "Low"
+    }
+  ]
+}

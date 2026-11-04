@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Everytown OCI MVP baseline stack (sandbox only): one private S3 bucket for
+  submissions and a least-privilege IAM role for the Python_API (S3 objects +
+  Bedrock InvokeModel). No Cognito, RDS, load balancers, WAF, KMS, Secrets
+  Manager or Marketplace resources.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: oci-mvp
+    AllowedPattern: "^[a-z0-9-]{3,30}$"
+    Description: Prefix for resource names.
+  BedrockInferenceProfileId:
+    Type: String
+    Default: us.anthropic.claude-sonnet-4-5-20250929-v1:0
+    Description: >-
+      Cross-region inference profile id the app calls (OCI_BEDROCK_MODEL_ID).
+      Pick an enabled Claude profile from the Bedrock console in us-west-2.
+  BedrockFoundationModelId:
+    Type: String
+    Default: anthropic.claude-sonnet-4-5-20250929-v1:0
+    Description: Foundation model id behind the inference profile (the id without the "us." prefix).
+
+Rules:
+  RegionIsUsWest2:
+    Assertions:
+      - Assert: !Equals [!Ref "AWS::Region", us-west-2]
+        AssertDescription: The OCI stack must be deployed to us-west-2.
+
+Resources:
+  SubmissionsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-submissions-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: project
+          Value: !Ref ProjectName
+        - Key: data-classification
+          Value: synthetic-only
+
+  SubmissionsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SubmissionsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt SubmissionsBucket.Arn
+              - !Sub "${SubmissionsBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  OciApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-api-role"
+      Description: Role assumed by the OCI Python_API (local dev via sts assume-role, or a Fargate task later).
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: SameAccountDevelopers
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+            Action: sts:AssumeRole
+          - Sid: FargateTasks
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref "AWS::AccountId"
+      Policies:
+        - PolicyName: oci-api-least-privilege
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SubmissionObjects
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub "${SubmissionsBucket.Arn}/submissions/*"
+              - Sid: ListSubmissions
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt SubmissionsBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - "submissions/*"
+              - Sid: InvokeClaudeInferenceProfile
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/${BedrockInferenceProfileId}"
+              - Sid: InvokeClaudeFoundationModelViaProfile
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                # A US cross-region profile may route to any US region, so the region is a wildcard here.
+                Resource: !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/${BedrockFoundationModelId}"
+
+Outputs:
+  SubmissionsBucketName:
+    Description: Set as OCI_S3_BUCKET for the Python_API.
+    Value: !Ref SubmissionsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-SubmissionsBucket"
+  ApiRoleArn:
+    Description: Role for the Python_API to assume.
+    Value: !GetAtt OciApiRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiRoleArn"
+  Region:
+    Description: Region for every resource and Bedrock call.
+    Value: !Ref "AWS::Region"

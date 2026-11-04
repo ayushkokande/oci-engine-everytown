@@ -24,3 +24,12 @@ env/
 
 # Kiro local session config
 .kiro/specs/**/.config.kiro
+
+# MVP build artifacts and local data
+node_modules/
+frontend/dist/
+python_api/.data/
+.env
+.env.local
+.hypothesis/
+.pytest_cache/

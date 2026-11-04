@@ -1,0 +1,6 @@
+-r python_api/requirements.txt
+pytest>=8
+hypothesis>=6.100
+httpx>=0.27
+pypdf>=4
+cfn-lint>=1.0
