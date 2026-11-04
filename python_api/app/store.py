@@ -35,6 +35,13 @@ class SubmissionRecord:
     orchestration_status: str = "pending"
     orchestration_error: str | None = None
     synthetic: bool = False
+    # Narrative-only additions; scores, stages and gaps above never change after scoring.
+    domain_analysis: dict = field(default_factory=dict)      # domain_id -> analysis paragraph
+    org_context: list = field(default_factory=list)          # [{text, timestamp}] the org added later
+    revision_status: str = "none"                            # none | pending | ok | error
+    revision_error: str | None = None
+    revision_count: int = 0
+    revisions: list = field(default_factory=list)            # earlier narrative versions, newest last
 
     def to_dict(self) -> dict:
         return asdict(self)

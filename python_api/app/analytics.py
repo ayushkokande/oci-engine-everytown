@@ -9,6 +9,7 @@ from collections import Counter
 
 from utils.data_loader import get_domains, get_stage_names
 
+from .stage_profile import STAGE_EXPLAINER, network_stage_profile, stage_profile
 from .store import SubmissionRecord, month_prefixes
 
 STAGE_ORDER = {name: int(num) for num, name in get_stage_names().items()}
@@ -42,6 +43,8 @@ def aggregate(records: list[SubmissionRecord], date_from=None, date_to=None, cat
             slot["pcts"].append(d["score_pct"])
             slot["stages"].append(d["estimated_stage"])
         gap_counter.update(g["question_id"] for g in r.gaps)
+    # Same stage profile the organization sees on its results page and in its PDF.
+    net_profile = network_stage_profile([stage_profile(r.scores, r.gaps) for r in rows])
 
     domain_averages = []
     for did, slot in per_domain.items():
@@ -56,6 +59,7 @@ def aggregate(records: list[SubmissionRecord], date_from=None, date_to=None, cat
             "avg_stage": modal,
             "mean_stage_number": round(mean_stage_num, 2),
             "stage_distribution": {name: stage_counts.get(name, 0) for name in STAGE_ORDER},
+            "stage_profile": net_profile.get(did, []),
             "submissions": len(slot["pcts"]),
         })
 
@@ -69,6 +73,7 @@ def aggregate(records: list[SubmissionRecord], date_from=None, date_to=None, cat
     return {
         "filters": {"from": date_from, "to": date_to, "category": category},
         "total_submissions": len(rows),
+        "stage_rule": STAGE_EXPLAINER,
         "by_category": {"grantee": by_category.get("grantee", 0), "non_grantee": by_category.get("non_grantee", 0)},
         "domain_averages": domain_averages,
         "most_common_gaps": most_common,
