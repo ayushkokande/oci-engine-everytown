@@ -176,7 +176,7 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
           </div>
         </div>
 
-        <aside className="results-side">
+        <aside className="results-side staff-side">
           <AssessmentChat
             id="staff-chat"
             title={`Ask about ${data.profile.org_name}`}
