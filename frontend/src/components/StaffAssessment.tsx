@@ -188,7 +188,6 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
             messages={chat}
             onMessagesChange={setChat}
             send={(m) => api.staffChat(submissionId, m)}
-            notice="AI-generated. Check anything you plan to share with the organization against the data above."
           />
           {(data.org_context?.length ?? 0) > 0 && (
             <div className="card">
