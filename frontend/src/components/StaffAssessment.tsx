@@ -73,10 +73,6 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
           </a>
         </div>
       </div>
-      <p className="muted small">
-        Staff only: this organization's own results are never shown to other organizations. Insights are
-        computed from its scores and network aggregates; click a question id to see the feedback it received.
-      </p>
 
       {data.orchestration_status === "seed" && (
         <div className="alert warn">Pre-loaded assessment: it has scores but no AI narrative.</div>
@@ -180,7 +176,7 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
           </div>
         </div>
 
-        <aside className="results-side">
+        <aside className="results-side staff-side">
           <AssessmentChat
             id="staff-chat"
             title={`Ask about ${data.profile.org_name}`}
@@ -192,7 +188,6 @@ export function StaffAssessment({ submissionId, onBack }: { submissionId: string
             messages={chat}
             onMessagesChange={setChat}
             send={(m) => api.staffChat(submissionId, m)}
-            notice="AI-generated. Check anything you plan to share with the organization against the data above."
           />
           {(data.org_context?.length ?? 0) > 0 && (
             <div className="card">

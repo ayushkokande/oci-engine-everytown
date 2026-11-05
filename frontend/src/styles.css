@@ -73,7 +73,6 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
 .pstep.current .pstep-dot { border-color: var(--ink); background: var(--ink); color: #fff; }
 .pstep.done .pstep-dot { border-color: var(--accent); background: var(--accent); color: #fff; }
 
-.footer { text-align: center; font-size: 0.78rem; color: var(--muted); padding: 18px 24px 26px; border-top: 1px solid var(--line); }
 
 /* primitives */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; }
@@ -439,9 +438,23 @@ code { background: #efe9dd; padding: 1px 6px; border-radius: 6px; font-size: 0.9
 .focus-rec { border-color: var(--ink-2); }
 .network-stages { display: grid; gap: 14px; }
 
+/* Staff assessment: keep the chat beside the content while scrolling, filling the screen height */
+.staff-side {
+  position: sticky; top: 16px; align-self: start;
+  display: flex; flex-direction: column; gap: 16px;
+  max-height: calc(100vh - 32px);
+}
+.staff-side > * { flex: none; }
+.staff-side .achat { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; }
+.staff-side .achat.has-messages { flex: 1 1 auto; }
+.staff-side:has(.achat.has-messages) { height: calc(100vh - 32px); }
+.staff-side .achat-log { flex: 1 1 auto; min-height: 140px; max-height: none; }
+.staff-side .context-list { max-height: 180px; overflow-y: auto; }
+
 @media (max-width: 900px) {
   .login-wrap, .quiz, .two-col, .results-grid { grid-template-columns: 1fr; }
-  .results-side { position: static; }
+  .results-side, .staff-side, .staff-side:has(.achat.has-messages) { position: static; max-height: none; height: auto; }
+  .staff-side .achat-log { max-height: 380px; }
   .rec-row > summary { flex-direction: column; gap: 2px; }
   .staff-tabs { min-width: 0; width: 100%; }
   .quiz-rail { position: static; }

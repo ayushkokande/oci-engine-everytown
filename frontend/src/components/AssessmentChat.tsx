@@ -23,7 +23,7 @@ export function AssessmentChat({
   messages: ChatMessage[];
   onMessagesChange: (messages: ChatMessage[]) => void;
   send: (messages: ChatMessage[]) => Promise<string>;
-  notice: string;
+  notice?: string;
   actions?: ReactNode;
 }) {
   const [draft, setDraft] = useState("");
@@ -70,7 +70,7 @@ export function AssessmentChat({
   };
 
   return (
-    <section className="card achat" aria-labelledby={`${id}-title`}>
+    <section className={`card achat ${messages.length ? "has-messages" : ""}`} aria-labelledby={`${id}-title`}>
       <header className="achat-head">
         <h2 id={`${id}-title`} className="section-title">{title}</h2>
         {messages.length > 0 && !sending && (
@@ -126,7 +126,7 @@ export function AssessmentChat({
         </button>
       </form>
       {actions && <div className="achat-actions">{actions}</div>}
-      <p className="muted achat-notice">{notice}</p>
+      {notice && <p className="muted achat-notice">{notice}</p>}
     </section>
   );
 }
