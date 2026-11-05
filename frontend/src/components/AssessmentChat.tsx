@@ -23,7 +23,7 @@ export function AssessmentChat({
   messages: ChatMessage[];
   onMessagesChange: (messages: ChatMessage[]) => void;
   send: (messages: ChatMessage[]) => Promise<string>;
-  notice: string;
+  notice?: string;
   actions?: ReactNode;
 }) {
   const [draft, setDraft] = useState("");
@@ -126,7 +126,7 @@ export function AssessmentChat({
         </button>
       </form>
       {actions && <div className="achat-actions">{actions}</div>}
-      <p className="muted achat-notice">{notice}</p>
+      {notice && <p className="muted achat-notice">{notice}</p>}
     </section>
   );
 }
