@@ -39,7 +39,7 @@ export function StaffAnalytics() {
           <p className="muted">
             {tab === "overview"
               ? "Aggregate figures across completed assessments."
-              : "Staff only. Open an assessment to see the feedback the organization received, linked insights, and to ask questions about it."}
+              : "Open an assessment to see the feedback the organization received, linked insights, and to ask questions about it."}
           </p>
         </div>
         <div className="tabs staff-tabs" role="tablist">
