@@ -70,7 +70,7 @@ export function AssessmentChat({
   };
 
   return (
-    <section className="card achat" aria-labelledby={`${id}-title`}>
+    <section className={`card achat ${messages.length ? "has-messages" : ""}`} aria-labelledby={`${id}-title`}>
       <header className="achat-head">
         <h2 id={`${id}-title`} className="section-title">{title}</h2>
         {messages.length > 0 && !sending && (
