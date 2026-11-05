@@ -176,11 +176,6 @@ export default function App() {
         )}
         {step === "staff" && <StaffAnalytics />}
       </main>
-
-      <footer className="footer">
-        Synthetic data only · Scores are computed by the deterministic OCI engine; narrative text is
-        AI-generated and should be reviewed with CSF program staff.
-      </footer>
     </div>
   );
 }
